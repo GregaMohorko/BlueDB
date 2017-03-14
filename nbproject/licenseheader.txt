@@ -1,0 +1,11 @@
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}${nameAndExt}
+${licensePrefix}
+${licensePrefix}@project ${project.name}
+${licensePrefix}@author ${userName} <${userEmail}>
+${licensePrefix}@copyright ${date} ${userName}
+<#if licenseLast??>
+${licenseLast}
+</#if>
