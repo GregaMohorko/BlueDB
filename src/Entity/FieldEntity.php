@@ -54,6 +54,20 @@ abstract class FieldEntity implements IFieldEntity
 	}
 	
 	/**
+	 * Is the same as calling loadListByCriteria with $criteria=null.
+	 * 
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @param bool $inclOneToMany
+	 * @return array
+	 */
+	static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
+	{
+		$childClassName=get_called_class();
+		return $childClassName::loadListByCriteria(null, $fields, $fieldsToIgnore, $inclOneToMany);
+	}
+	
+	/**
 	 * Does not save ManyToOne fields, only sets the ID.
 	 * 
 	 * @param array $fieldEntities

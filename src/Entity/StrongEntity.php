@@ -54,7 +54,7 @@ abstract class StrongEntity extends FieldEntity
 	 * @param bool $inclOneToMany
 	 * @return StrongEntity
 	 */
-	static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
+	public static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
 	{
 		$childClassName=get_called_class();
 		
@@ -71,58 +71,11 @@ abstract class StrongEntity extends FieldEntity
 	 * @param bool $inclOneToMany
 	 * @return StrongEntity
 	 */
-	static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
+	public static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
 	{
 		$childClassName=get_called_class();
-		if($childClassName!==$criteria->BaseEntityClass)
-			throw new Exception("Criteria BaseEntityClass (".$criteria->BaseEntityClass.") is different than the called child class (".$childClassName.").");
 		
-		$baseEntityTableName=$childClassName::getTableName();
-		
-		if(!empty($fields))
-			$fieldsToLoad=$fields;
-		else
-			$fieldsToLoad=$childClassName::getFieldList();
-		
-		// Columns
-		$query="SELECT ";
-		$isFirst=true;
-		foreach($fieldsToLoad as $field){
-			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore))
-				continue;
-			
-			$fieldBaseConstName=$childClassName."::".$field;
-			$fieldType=constant($fieldBaseConstName."FieldType");
-			
-			switch($fieldType){
-				case FieldTypeEnum::PROPERTY:
-					if(!$isFirst)
-						$query.=",";
-					else
-						$isFirst=false;
-
-					$fieldColumn=constant($fieldBaseConstName."Column");
-					
-					$query.=$baseEntityTableName.".".$fieldColumn." AS ".$field;
-					break;
-				case FieldTypeEnum::MANY_TO_ONE:
-					// TODO StrongEntity::loadByCriteria manyToOne
-				case FieldTypeEnum::ONE_TO_MANY:
-					// TODO StrongEntity::loadByCriteria oneToMany
-				case FieldTypeEnum::MANY_TO_MANY:
-					throw new Exception("ManyToMany field is currently not yet supported for loading from here.");
-				default:
-					throw new Exception("FieldType of type ".$fieldType." is not allowed in loadByCriteria function.");
-			}
-		}
-		
-		$query.=" FROM ".$baseEntityTableName;
-		
-		$criteria->prepare();
-		if(!empty($criteria->PreparedQueryJoins))
-			$query.=" ".$criteria->PreparedQueryJoins;
-		if(!empty($criteria->PreparedQueryRestrictions))
-			$query.=" WHERE ".$criteria->PreparedQueryRestrictions;
+		$query=self::prepareSelectQuery($childClassName, $criteria, $fields, $fieldsToIgnore);
 		
 		if(count($criteria->PreparedParameters)>1)
 			$loadedArray=MySQL::prepareAndExecuteSelectSingleStatement($query,$criteria->PreparedParameters);
@@ -132,75 +85,9 @@ abstract class StrongEntity extends FieldEntity
 		if($loadedArray===null)
 			return null;
 		
-		$loadedEntity=new $childClassName();
-		FieldEntityHelper::setFieldValues($loadedEntity, $loadedArray, $childClassName);
+		$loadedEntity=self::createInstance($childClassName, $loadedArray);
 		
 		return $loadedEntity;
-	}
-	
-	/**
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
-	 * @return array
-	 */
-	static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
-	{
-		$childClassName=get_called_class();
-		$baseEntityTableName=$childClassName::getTableName();
-		
-		if(!empty($fields))
-			$fieldsToLoad=$fields;
-		else
-			$fieldsToLoad=$childClassName::getFieldList();
-		
-		$query="SELECT ";
-		$isFirst=true;
-		foreach($fieldsToLoad as $field){
-			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore))
-				continue;
-			
-			$fieldBaseConstName=$childClassName."::".$field;
-			$fieldType=constant($fieldBaseConstName."FieldType");
-			
-			switch($fieldType){
-				case FieldTypeEnum::PROPERTY:
-					if(!$isFirst)
-						$query.=",";
-					else
-						$isFirst=false;
-
-					$fieldColumn=constant($fieldBaseConstName."Column");
-					
-					$query.=$fieldColumn." AS ".$field;
-					break;
-				case FieldTypeEnum::MANY_TO_ONE:
-					// TODO StrongEntity::loadList manyToOne
-					break;
-				case FieldTypeEnum::ONE_TO_MANY:
-					// TODO StrongEntity::loadList oneToMany
-					break;
-				case FieldTypeEnum::MANY_TO_MANY:
-					throw new Exception("ManyToMany field is currently not yet supported for loading from here.");
-				default:
-					throw new Exception("FieldType of type ".$fieldType." is not allowed in loadList function.");
-			}
-		}
-		
-		$query.=" FROM ".$baseEntityTableName;
-		
-		$loadedArray=MySQL::select($query);
-		
-		$loadedEntities=[];
-		
-		foreach($loadedArray as $array){
-			$newEntity=new $childClassName();
-			FieldEntityHelper::setFieldValues($newEntity, $array,$childClassName);
-			
-			$loadedEntities[]=$newEntity;
-		}
-		
-		return $loadedEntities;
 	}
 	
 	/**
@@ -210,61 +97,13 @@ abstract class StrongEntity extends FieldEntity
 	 * @param bool $inclOneToMany
 	 * @return array
 	 */
-	static function loadListByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
+	public static function loadListByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
 	{
 		$childClassName=get_called_class();
-		if($childClassName!==$criteria->BaseEntityClass)
-			throw new Exception("Criteria BaseEntityClass (".$criteria->BaseEntityClass.") is different than the called child class (".$childClassName.").");
 		
-		$baseEntityTableName=$childClassName::getTableName();
+		$query=self::prepareSelectQuery($childClassName, $criteria, $fields, $fieldsToIgnore);
 		
-		if(!empty($fields))
-			$fieldsToLoad=$fields;
-		else
-			$fieldsToLoad=$childClassName::getFieldList();
-		
-		$query="SELECT ";
-		$isFirst=true;
-		foreach($fieldsToLoad as $field){
-			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore))
-				continue;
-			
-			$fieldsBaseConstName=$childClassName."::".$field;
-			$fieldType=constant($fieldsBaseConstName."FieldType");
-			
-			switch($fieldType){
-				case FieldTypeEnum::PROPERTY:
-					if(!$isFirst)
-						$query.=",";
-					else
-						$isFirst=false;
-
-					$fieldColumn=constant($fieldsBaseConstName."Column");
-					
-					$query.=$baseEntityTableName.".".$fieldColumn." AS ".$field;
-					break;
-				case FieldTypeEnum::MANY_TO_ONE:
-					// TODO StrongEntity::loadListByCriteria manyToOne
-					break;
-				case FieldTypeEnum::ONE_TO_MANY:
-					// TODO StrongEntity::loadListByCriteria manyToOne
-					break;
-				case FieldTypeEnum::MANY_TO_MANY:
-					throw new Exception("ManyToMany field is currently not yet supported for loading from here.");
-				default:
-					throw new Exception("FieldType of type ".$fieldType." is not allowed in loadListByCriteria function.");
-			}
-		}
-		
-		$query.=" FROM ".$baseEntityTableName;
-		
-		$criteria->prepare();
-		if(!empty($criteria->PreparedQueryJoins))
-			$query.=" ".$criteria->PreparedQueryJoins;
-		if(!empty($criteria->PreparedQueryRestrictions))
-			$query.=" WHERE ".$criteria->PreparedQueryRestrictions;
-		
-		if(count($criteria->PreparedParameters)>1)
+		if($criteria!==null && count($criteria->PreparedParameters)>1)
 			$loadedArray=MySQL::prepareAndExecuteSelectStatement($query, $criteria->PreparedParameters);
 		else
 			$loadedArray=MySQL::select($query);
@@ -272,10 +111,7 @@ abstract class StrongEntity extends FieldEntity
 		$loadedEntities=[];
 		
 		foreach($loadedArray as $array){
-			$newEntity=new $childClassName();
-			FieldEntityHelper::setFieldValues($newEntity, $array,$childClassName);
-			
-			$loadedEntities[]=$newEntity;
+			$loadedEntities[]=self::createInstance($childClassName, $array);
 		}
 		
 		return $loadedEntities;
@@ -289,93 +125,13 @@ abstract class StrongEntity extends FieldEntity
 	 * @param boolean $commit
 	 * @param bool $inclOneToMany
 	 */
-	static function save(&$strongEntity,$beginTransaction=true,$commit=true,$inclOneToMany=false)
+	public static function save($strongEntity,$beginTransaction=true,$commit=true,$inclOneToMany=false)
 	{
 		if($strongEntity->ID!=null)
-			throw new Exception("The provided object does not have a null ID. Call Update function instead.");
+			throw new Exception("The provided objects ID is not null. Call Update function instead.");
 		
-		$childClassName=get_class($strongEntity);
-		if($childClassName!=get_called_class())
-			throw new Exception("Object class '".$childClassName."' is not the same as the called class '".get_called_class()."'.");
-		
-		$baseEntityTableName=$childClassName::getTableName();
-		
-		$preparedValues=[];
-		$preparedValues[]="";
-		$preparedValuesDirect=[];
-		$preparedValuesDirectIndex=0;
-		
-		// Columns & Values
-		$query="INSERT INTO ".$baseEntityTableName." (";
-		$isFirst=true;
-		foreach($childClassName::getFieldList() as $field) {
-			if($strongEntity->$field==null)
-				continue;
-
-			$fieldBaseConstName=$childClassName."::".$field;
-			$fieldType=constant($fieldBaseConstName."FieldType");
-			switch($fieldType){
-				case FieldTypeEnum::PROPERTY:
-					if(!$isFirst)
-						$query.=",";
-					else
-						$isFirst=false;
-					
-					$query.=constant($fieldBaseConstName."Column");
-					
-					$propertyType=constant($fieldBaseConstName."PropertyType");
-
-					$preparedValues[0].=PropertyTypeEnum::getPreparedStmtType($propertyType);
-					$preparedValuesDirect[]=PropertyTypeEnum::convertToString($strongEntity->$field, $propertyType);
-					$preparedValues[]=&$preparedValuesDirect[$preparedValuesDirectIndex];
-					$preparedValuesDirectIndex++;
-					break;
-				case FieldTypeEnum::MANY_TO_ONE:
-					// TODO StrongEntity::save manyToOne
-					break;
-				case FieldTypeEnum::ONE_TO_MANY:
-					// TODO StrongEntity::save oneToMany
-				case FieldTypeEnum::MANY_TO_MANY:
-					throw new Exception("ManyToMany field is currently not yet supported for saving from here.");
-				default:
-					throw new Exception("FieldType of type '".$fieldType."' is not allowed in save function.");
-			}
-		}
-		
-		// Question marks
-		$query.=") VALUES (";
-		$preparedValuesCount=count($preparedValues);
-		if($preparedValuesCount>1){
-			$isFirst=true;
-			for($i=1;$i<$preparedValuesCount;$i++){
-				if(!$isFirst)
-					$query.=",";
-				else
-					$isFirst=false;
-
-				$query.="?";
-			}
-		}
-		$query.=")";
-		
-		if($beginTransaction)
-			MySQL::beginTransaction();
-		
-		try{
-			if($preparedValuesCount>1)
-				MySQL::prepareAndExecuteStatement($query, $preparedValues);
-			else
-				// if no prepared values are present, no need for prepared statement
-				MySQL::insert($query);
-		} catch (Exception $ex) {
-			MySQL::rollbackTransaction();
-			throw $ex;
-		}
-		
-		$strongEntity->ID=MySQL::autogeneratedID();
-		
-		if($commit)
-			MySQL::commitTransaction();
+		$calledClass=get_called_class();
+		self::performQuery(QueryTypeEnum::INSERT, $calledClass, $strongEntity, null, $beginTransaction, $commit);
 	}
 	
 	/**
@@ -387,9 +143,9 @@ abstract class StrongEntity extends FieldEntity
 	 * @param array $fields
 	 * @param bool $inclOneToMany
 	 */
-	static function update($strongEntity,$beginTransaction=true,$commit=true,$fields=null,$inclOneToMany=false)
+	public static function update($strongEntity,$beginTransaction=true,$commit=true,$fields=null,$inclOneToMany=false)
 	{
-		if($strongEntity==null){
+		if($strongEntity===null){
 			// at least open/close the transaction, if it needs to be
 			
 			if($beginTransaction&&!$commit)
@@ -403,76 +159,8 @@ abstract class StrongEntity extends FieldEntity
 		if($strongEntity->ID==null)
 			throw new Exception("The provided objects ID is null. Call Save function instead.");
 		
-		$childClassName=get_class($strongEntity);
-		if($childClassName!=get_called_class())
-			throw new Exception("Object class '".$childClassName."' is not the same as the called class '".get_called_class()."'.");
-		
-		$baseEntityTableName=$childClassName::getTableName();
-		
-		$preparedValues=[];
-		$preparedValues[]="";
-		$preparedValuesDirect=[];
-		$preparedValuesDirectIndex=0;
-		
-		if($fields==null)
-			$fields=$childClassName::getFieldList();
-		
-		// Columns & Values
-		$query="UPDATE ".$baseEntityTableName." SET ";
-		$isFirst=true;
-		foreach($fields as $field){
-			$fieldBaseConstName=$childClassName."::".$field;
-			/*@var $fieldType FieldTypeEnum */
-			$fieldType=constant($fieldBaseConstName."FieldType");
-			switcH($fieldType){
-				case FieldTypeEnum::PROPERTY:
-					if(!$isFirst)
-						$query.=",";
-					else
-						$isFirst=false;
-
-					$query.=constant($fieldBaseConstName."Column")."=?";
-			
-					/*@var $propertyType PropertyTypeEnum*/
-					$propertyType=constant($fieldBaseConstName."PropertyType");
-					
-					$preparedValues[0].=PropertyTypeEnum::getPreparedStmtType($propertyType);
-					$preparedValuesDirect[]=PropertyTypeEnum::convertToString($strongEntity->$field, $propertyType);
-					$preparedValues[]=&$preparedValuesDirect[$preparedValuesDirectIndex];
-					$preparedValuesDirectIndex++;
-					break;
-				case FieldTypeEnum::MANY_TO_ONE:
-					// TODO StrongEntity::update manyToOne
-					break;
-				case FieldTypeEnum::ONE_TO_MANY:
-					// TODO StrongEntity::save oneToMany
-				case FieldTypeEnum::MANY_TO_MANY:
-					throw new Exception("ManyToMany field is currently not yet supported for saving from here.");
-				default:
-					throw new Exception("FieldType of type '".$fieldType."' is not allowed in update function.");
-			}
-		}
-		
-		// Condition
-		$query.=" WHERE ".$baseEntityTableName.".ID=?";
-		$preparedValues[0].=PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
-		$preparedValues[]=&$strongEntity->ID;
-		
-		if($beginTransaction)
-			MySQL::beginTransaction();
-		
-		try{
-			if(count($preparedValues)>1)
-				MySQL::prepareAndExecuteStatement($query, $preparedValues);
-			else
-				MySQL::update($query);
-		} catch (Exception $ex) {
-			MySQL::rollbackTransaction();
-			throw $ex;
-		}
-		
-		if($commit)
-			MySQL::commitTransaction();
+		$calledClass=get_called_class();
+		self::performQuery(QueryTypeEnum::UPDATE, $calledClass, $strongEntity, $fields, $beginTransaction, $commit);
 	}
 	
 	/**
@@ -482,7 +170,7 @@ abstract class StrongEntity extends FieldEntity
 	 * @param boolean $beginTransaction
 	 * @param boolean $commit
 	 */
-	static function delete($strongEntity,$beginTransaction=true,$commit=true)
+	public static function delete($strongEntity,$beginTransaction=true,$commit=true)
 	{
 		if($strongEntity==null){
 			// at least open/close the transaction, if it needs to be
@@ -499,8 +187,6 @@ abstract class StrongEntity extends FieldEntity
 			throw new Exception("The provided objects ID is null. What are you trying to delete?");
 		
 		$childClassName=get_class($strongEntity);
-		if($childClassName!=get_called_class())
-			throw new Exception("Object class '"+$childClassName+"' is not the same as the called class '"+get_called_class()+"'.");
 		
 		$tableName=$childClassName::getTableName();
 		
@@ -522,5 +208,219 @@ abstract class StrongEntity extends FieldEntity
 		
 		if($commit)
 			MySQL::commitTransaction();
+	}
+	
+	/**
+	 * @param string $childClassName
+	 * @param Criteria $criteria
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @return string Query.
+	 */
+	private static function prepareSelectQuery($childClassName,$criteria,$fields,$fieldsToIgnore)
+	{
+		if($criteria!==null && $childClassName!==$criteria->BaseEntityClass)
+			throw new Exception("Criterias BaseEntityClass (".$criteria->BaseEntityClass.") is different than the called child class (".$childClassName.").");
+		
+		$baseEntityTableName=$childClassName::getTableName();
+		
+		if(!empty($fields))
+			$fieldsToLoad=$fields;
+		else
+			$fieldsToLoad=$childClassName::getFieldList();
+		
+		$query="SELECT ";
+		$isFirst=true;
+		foreach($fieldsToLoad as $field){
+			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore))
+				continue;
+			
+			$fieldsBaseConstName=$childClassName."::".$field;
+			$fieldType=constant($fieldsBaseConstName."FieldType");
+			
+			switch($fieldType){
+				case FieldTypeEnum::PROPERTY:
+					if($isFirst)
+						$isFirst=false;
+					else
+						$query.=",";
+					
+					$fieldColumn=constant($fieldsBaseConstName."Column");
+					
+					$query.=$baseEntityTableName.".".$fieldColumn." AS ".$field;
+					break;
+				case FieldTypeEnum::MANY_TO_ONE:
+					// TODO StrongEntity::loadListByCriteria manyToOne
+					break;
+				case FieldTypeEnum::ONE_TO_MANY:
+					// TODO StrongEntity::loadListByCriteria manyToOne
+					break;
+				case FieldTypeEnum::MANY_TO_MANY:
+					throw new Exception("ManyToMany field is currently not yet supported for loading from here.");
+				default:
+					throw new Exception("FieldType of type '$fieldType' is not supported.");
+			}
+		}
+		
+		$query.=" FROM ".$baseEntityTableName;
+		
+		if($criteria!==null){
+			$criteria->prepare();
+			if(!empty($criteria->PreparedQueryJoins))
+				$query.=" ".$criteria->PreparedQueryJoins;
+			if(!empty($criteria->PreparedQueryRestrictions))
+				$query.=" WHERE ".$criteria->PreparedQueryRestrictions;
+		}
+		
+		return $query;
+	}
+	
+	/**
+	 * Insert or update.
+	 * 
+	 * @param QueryTypeEnum $type
+	 * @param string $calledClass
+	 * @param StrongEntity $strongEntity
+	 * @param array $fields
+	 * @param boolean $beginTransaction
+	 * @param boolean $commit
+	 */
+	private static function performQuery($type,$calledClass,$strongEntity,$fields,$beginTransaction,$commit)
+	{
+		switch($type){
+			case QueryTypeEnum::INSERT:
+			case QueryTypeEnum::UPDATE:
+				break;
+			default:
+				throw new Exception("Query of type '$type' is not supported.");
+		}
+		
+		$childClassName=get_class($strongEntity);
+		if($childClassName!==$calledClass)
+			throw new Exception("Type of the provided object '$childClassName' is not the same as the called class '$calledClass'.");
+		
+		$baseEntityTableName=$childClassName::getTableName();
+		
+		$preparedValues=[];
+		$preparedValues[]="";
+		$preparedValuesDirect=[];
+		$preparedValuesDirectIndex=0;
+		
+		if($fields==null)
+			$fields=$childClassName::getFieldList();
+		
+		switch($type){
+			case QueryTypeEnum::INSERT:
+				$query="INSERT INTO $baseEntityTableName (";
+				break;
+			case QueryTypeEnum::UPDATE:
+				$query="UPDATE $baseEntityTableName SET ";
+				break;
+		}
+		$isFirst=true;
+		foreach($fields as $field){
+			if($type==QueryTypeEnum::INSERT && $strongEntity->$field==null)
+				continue;
+			
+			$fieldBaseConstName=$childClassName."::".$field;
+			/*@var $fieldType FieldTypeEnum */
+			$fieldType=constant($fieldBaseConstName."FieldType");
+			switch($fieldType){
+				case FieldTypeEnum::PROPERTY:
+					if(!$isFirst)
+						$query.=",";
+					else
+						$isFirst=false;
+
+					$query.=constant($fieldBaseConstName."Column");
+					if($type==QueryTypeEnum::UPDATE)
+						$query.="=?";
+			
+					/*@var $propertyType PropertyTypeEnum*/
+					$propertyType=constant($fieldBaseConstName."PropertyType");
+					
+					$preparedValues[0].=PropertyTypeEnum::getPreparedStmtType($propertyType);
+					$preparedValuesDirect[]=PropertyTypeEnum::convertToString($strongEntity->$field, $propertyType);
+					$preparedValues[]=&$preparedValuesDirect[$preparedValuesDirectIndex];
+					$preparedValuesDirectIndex++;
+					break;
+				case FieldTypeEnum::MANY_TO_ONE:
+					// TODO StrongEntity::save manyToOne
+					break;
+				case FieldTypeEnum::ONE_TO_MANY:
+					// TODO StrongEntity::save oneToMany
+				case FieldTypeEnum::MANY_TO_MANY:
+					throw new Exception("ManyToMany field is currently not yet supported for saving from here.");
+				default:
+					throw new Exception("FieldType of type '$fieldType' is not supported.");
+			}
+		}
+		
+		$preparedValuesCount=count($preparedValues);
+
+		switch($type){
+			case QueryTypeEnum::INSERT:
+				// Question marks
+				$query.=") VALUES (";
+				if($preparedValuesCount>1){
+					$isFirst=true;
+					for($i=1;$i<$preparedValuesCount;++$i){
+						if($isFirst)
+							$isFirst=false;
+						else
+							$query.=",";
+						$query.="?";
+					}
+				}
+				$query.=")";
+				break;
+			case QueryTypeEnum::UPDATE:
+				// Condition
+				$query.=" WHERE $baseEntityTableName.ID=?";
+				$preparedValues[0].=PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
+				$preparedValues[]=&$strongEntity->ID;
+				++$preparedValuesCount;
+				break;
+		}
+		
+		if($beginTransaction)
+			MySQL::beginTransaction();
+		
+		try{
+			if($preparedValuesCount>1)
+				MySQL::prepareAndExecuteStatement($query, $preparedValues);
+			else{
+				// if no prepared values are present, no need for prepared statement
+				switch($type){
+					case QueryTypeEnum::INSERT:
+						MySQL::insert($query);
+						break;
+					case QueryTypeEnum::UPDATE:
+						MySQL::update($query);
+						break;
+				}
+			}
+		} catch (Exception $ex) {
+			MySQL::rollbackTransaction();
+			throw $ex;
+		}
+		
+		if($type==QueryTypeEnum::INSERT)
+			$strongEntity->ID=MySQL::autogeneratedID();
+		
+		if($commit)
+			MySQL::commitTransaction();
+	}
+	
+	/**
+	 * @param string $entityClass
+	 * @param array $fieldValues
+	 * @return StrongEntity
+	 */
+	private static function createInstance($entityClass,$fieldValues)
+	{
+		$newEntity=new $entityClass();
+		FieldEntityHelper::setFieldValues($newEntity, $fieldValues, $entityClass);
+		return $newEntity;
 	}
 }

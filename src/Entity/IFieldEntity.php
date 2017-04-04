@@ -51,6 +51,8 @@ interface IFieldEntity extends IDatabaseTable
 	static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=false);
 	
 	/**
+	 * Is the same as calling loadListByCriteria with $criteria=null.
+	 * 
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
 	 * @param bool $inclOneToMany
@@ -75,7 +77,7 @@ interface IFieldEntity extends IDatabaseTable
 	 * @param boolean $commit
 	 * @param bool $inclOneToMany
 	 */
-	static function save(&$fieldEntity,$beginTransaction=true,$commit=true,$inclOneToMany=false);
+	static function save($fieldEntity,$beginTransaction=true,$commit=true,$inclOneToMany=false);
 	
 	/**
 	 * Does not save ManyToOne fields, only sets the ID.

@@ -273,16 +273,24 @@ class Test1 extends Test
 	
 	private function testSave()
 	{
+		// create new empty user
+		$emptyUser=new User();
+		User::save($emptyUser,true,false);
+		// check if it was created
+		$emptyUser=User::loadByID(4);
+		assert($emptyUser!==null,"Saving new empty user");
+		assert($emptyUser->Username===null,"Empty users username");
+		// lets assume that if username is null, all other fields are too
+		
 		// create new user
 		$kleiner=new User();
 		$kleiner->Username="Kleiner";
 		$kleiner->Password="Fiddlesticks";
 		$kleiner->IsOkay=true;
 		$kleiner->Created=new DateTime();
-		User::save($kleiner, true, false);
-		// check if it was created
+		User::save($kleiner, false, false);
 		/* @var $kleiner User */
-		$kleiner=User::loadByID(4);
+		$kleiner=User::loadByID(5);
 		assert($kleiner!==null,"Saving new user");
 		assert($kleiner->Username==="Kleiner","Kleiners username");
 		

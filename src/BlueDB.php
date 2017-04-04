@@ -24,6 +24,7 @@ require_once 'DataAccess/Criteria/Criteria.php';
 require_once 'DataAccess/MySQL.php';
 require_once 'Entity/FieldTypeEnum.php';
 require_once 'Entity/PropertyTypeEnum.php';
+require_once 'Entity/QueryTypeEnum.php';
 require_once 'Entity/PropertyTypeCreator.php';
 require_once 'Entity/IDatabaseTable.php';
 require_once 'Entity/IFieldEntity.php';
