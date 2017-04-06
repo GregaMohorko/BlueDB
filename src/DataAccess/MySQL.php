@@ -74,16 +74,20 @@ class MySQL
 		$this->Source->set_charset("utf8");
 	}
 	
+	/**
+	 * Starts a transaction.
+	 */
 	public static function beginTransaction()
 	{
 		$instance=self::Instance();
 		
 		if(!$instance->Source->begin_transaction())
 			throw new Exception("Could not begin transaction: [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
-		
-		return true;
 	}
 	
+	/**
+	 * Commits the current transaction.
+	 */
 	public static function commitTransaction()
 	{
 		$instance=self::Instance();
@@ -92,6 +96,9 @@ class MySQL
 			throw new Exception("Could not commit: [".$instance->Source->errno."] ".$instance->error,$instance->Source->errno);
 	}
 	
+	/**
+	 * Rolls back current transaction.
+	 */
 	public static function rollbackTransaction()
 	{
 		$instance=self::Instance();

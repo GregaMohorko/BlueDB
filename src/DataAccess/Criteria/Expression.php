@@ -14,6 +14,8 @@ use Exception;
 use DateTime;
 use BlueDB\Entity\FieldTypeEnum;
 use BlueDB\Entity\PropertyTypeEnum;
+use BlueDB\Entity\SubEntity;
+use BlueDB\Utility\ArrayUtility;
 
 class Expression
 {
@@ -71,6 +73,47 @@ class Expression
 		$joinName=$arrayByJoinBaseColumn[$joinColumn];
 		
 		return $joinName;
+	}
+	
+	/**
+	 * Creates a join out of the specified values.
+	 * 
+	 * @param string $class
+	 * @param string $joinBasePlace
+	 * @param string $joinBaseColumn
+	 * @param string $joinColumn
+	 * @param string $joinName
+	 * @return array
+	 */
+	private static function createJoin($class,$joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
+	{
+		$theJoin=[];
+		$theJoin[$class]=self::createJoinArray($joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+		
+		return $theJoin;
+	}
+	
+	/**
+	 * Creates a join array out of the specified values.
+	 * 
+	 * @param string $joinBasePlace
+	 * @param string $joinBaseColumn
+	 * @param string $joinColumn
+	 * @param string $joinName
+	 * @return array
+	 */
+	private static function createJoinArray($joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
+	{
+		$type_BasePlace_BaseColumn=[];
+		$type_BasePlace_BaseColumn[$joinColumn]=$joinName;
+		$type_BasePlace=[];
+		$type_BasePlace[$joinBaseColumn]=$type_BasePlace_BaseColumn;
+		$typeJoin=[];
+		$typeJoin[$joinBasePlace]=$type_BasePlace;
+		$joinArray=[];
+		$joinArray[JoinType::INNER]=$typeJoin;
+		
+		return $joinArray;
 	}
 	
 	/**
@@ -177,12 +220,7 @@ class Expression
 			
 			$joinName=self::getJoinName($subEntityClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
 			$termName=$joinName;
-			$theJoin=[];
-			$theJoin[$subEntityClass]=[];
-			$theJoin[$subEntityClass][JoinType::INNER]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn][$joinColumn]=$joinName;
+			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$field." > ";
@@ -276,12 +314,7 @@ class Expression
 			
 			$joinName=self::getJoinName($subEntityClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
 			$termName=$joinName;
-			$theJoin=[];
-			$theJoin[$subEntityClass]=[];
-			$theJoin[$subEntityClass][JoinType::INNER]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn][$joinColumn]=$joinName;
+			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$field." BETWEEN ? AND ?";
@@ -341,12 +374,7 @@ class Expression
 
 			$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=[];
-			$theJoin[$subEntityClass]=[];
-			$theJoin[$subEntityClass][JoinType::INNER]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn][$joinColumn]=$joinName;
+			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -405,12 +433,7 @@ class Expression
 
 			$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=[];
-			$theJoin[$subEntityClass]=[];
-			$theJoin[$subEntityClass][JoinType::INNER]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn][$joinColumn]=$joinName;
+			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -451,15 +474,9 @@ class Expression
 
 				$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 				$termName=$joinName;
-				$theJoin=[];
-				$theJoin[$subEntityClass]=[];
-				$theJoin[$subEntityClass][JoinType::INNER]=[];
-				$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace]=[];
-				$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn]=[];
-				$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn][$joinColumn]=$joinName;
+				$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 			}
 			$term=$termName.".".$column." IS NULL";
-			
 			
 			return new Expression($subEntityClass,$theJoin,$term);
 		}
@@ -480,12 +497,7 @@ class Expression
 					
 					$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 					$termName=$joinName;
-					$theJoin=[];
-					$theJoin[$subEntityClass]=[];
-					$theJoin[$subEntityClass][JoinType::INNER]=[];
-					$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace]=[];
-					$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn]=[];
-					$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn][$joinColumn]=$joinName;
+					$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 				}
 				$term=$termName.".".$column."=?";
 				$propertyType=constant($joiningFieldBaseConstName."PropertyType");
@@ -496,7 +508,105 @@ class Expression
 				
 				return new Expression($subEntityClass,$theJoin,$term,$values,$valueTypes);
 			case FieldTypeEnum::MANY_TO_ONE:
-				// TODO Expression::equal manyToOne
+				// the $value is an Entity, check for all notnull PROPERTIES and use them for the expressions
+				$expressions=[];
+				
+				$joins=[];
+				
+				$join=null;
+				if($criteriaClass===$subEntityClass){
+					// no need to join, can just use base entity
+					$joinBasePlace=$criteriaClass::getTableName();
+				}else{
+					// has to join
+					
+					// join 1/2: the mandatory join of subEntityClass with the criteria class
+					$mandatoryJoinBasePlace=$criteriaClass::getTableName();
+					$mandatoryJoinBaseColumn=$criteriaClass::getIDColumn();
+					$mandatoryJoinColumn=$subEntityClass::getIDColumn();
+					$mandatoryJoinName=self::getJoinName($subEntityClass, JoinType::INNER, $mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn);
+					$joins[$subEntityClass]=self::createJoinArray($mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn, $mandatoryJoinName);
+					
+					$joinBasePlace=$mandatoryJoinName;
+				}
+				
+				$class=constant($joiningFieldBaseConstName."Class");
+				$column=constant($joiningFieldBaseConstName."Column");
+				$fields=$class::getFieldList();
+				/*@var $object StrongEntity*/
+				$object=$value;
+				
+				// let's check if only the ID is not null
+				$isOnlyIDNotNull=true;
+				$IDField=$class::getIDField();
+				foreach($fields as $field){
+					if($field===$IDField)
+						continue;
+					if($object->$field!==null){
+						$isOnlyIDNotNull=false;
+						break;
+					}
+				}
+				if($isOnlyIDNotNull){
+					// no need to join anything, can just compare the column to the raw int value of the ID (treat it like a normal property)
+					$value=$object->getID();
+					$term="$joinBasePlace.$column=?";
+					$valueAsString=PropertyTypeEnum::convertToString($value, PropertyTypeEnum::INT);
+					$valueType=PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
+					$values=[$valueAsString];
+					$valueTypes=[$valueType];
+
+					return new Expression($subEntityClass,$join,$term,$values,$valueTypes);
+				}
+				
+				// join 2/2: the join of restriction object class with the subEntityClass
+				// TODO what if the joining Entity Class and the base class are the same?
+				// It is very unlikely, but it can happen.
+				// It will happen when a table references itself ...
+				$joinBaseColumn=$column;
+				$joinColumn=$class::getIDColumn();
+				$joinName=self::getJoinName($class, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
+				$joins[$class]=self::createJoinArray($joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+				
+				foreach($fields as $joinField){
+					$joiningFieldBaseConstName="$class::$joinField";
+					$type=constant($joiningFieldBaseConstName."FieldType");
+					
+					$value=$object->$joinField;
+					switch($type){
+						case FieldTypeEnum::PROPERTY:
+							if($value!==null){
+								$column=constant($joiningFieldBaseConstName."Column");
+								$propertyType=constant($joiningFieldBaseConstName."PropertyType");
+								$valueAsString=PropertyTypeEnum::convertToString($value, $propertyType);
+								$term="$joinName.$column=?";
+								$valueType=PropertyTypeEnum::getPreparedStmtType($propertyType);
+								$values=[$valueAsString];
+								$valueTypes=[$valueType];
+								$expressions[]=new Expression($class,$joins,$term,$values,$valueTypes);
+							}
+							break;
+						default:
+							if($value!==null)
+								trigger_error("Only fields of type PROPERTY are considered inside Expression::Equals.",E_USER_NOTICE);
+							break;
+					}
+				}
+				
+				// check if it's a SubEntity to also include the ID (because the ID is in ManyToOne parent and is ignored in the above foreach ...
+				if(is_subclass_of($object, SubEntity::class)){
+					$id=$object->getID();
+					if($id!==null){
+						$column=$object->getIDColumn();
+						$valueAsString=PropertyTypeEnum::convertToString($id, PropertyTypeEnum::INT);
+						$term="$joinName.$column=?";
+						$values=[$valueAsString];
+						$valueTypes=["i"];
+						$expressions[]=new Expression($class,$joins,$term,$values,$valueTypes);
+					}
+				}
+				
+				return $expressions;
 			default:
 				throw new Exception("The provided field is of unsupported field type '".$type."'.");
 		}
@@ -549,12 +659,7 @@ class Expression
 
 			$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=[];
-			$theJoin[$subEntityClass]=[];
-			$theJoin[$subEntityClass][JoinType::INNER]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn]=[];
-			$theJoin[$subEntityClass][JoinType::INNER][$joinBasePlace][$joinBaseColumn][$joinColumn]=$joinName;
+			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -575,7 +680,23 @@ class Expression
 	 */
 	public static function any($expressions)
 	{
-		$entityClass=$expressions[0]->EntityClass;
+		// first, flatten the expressions (in case there are any arrays with inner expressions)
+		$flattenedExpressions=[];
+		while(count($expressions)>0){
+			$newExpressions=[];
+			
+			foreach($expressions as $item){
+				if(is_array($item)){
+					$newExpressions=ArrayUtility::mergeTwo($newExpressions, $item);
+				}else{
+					$flattenedExpressions[]=$item;
+				}
+			}
+			
+			$expressions=$newExpressions;
+		}
+		
+		$entityClass=$flattenedExpressions[0]->EntityClass;
 		$mergedJoins=[];
 		$mergedTerm="(";
 		$mergedValues=[];
@@ -583,7 +704,7 @@ class Expression
 		$valueCount=0;
 		
 		$isFirst=true;
-		foreach($expressions as $expression){
+		foreach($flattenedExpressions as $expression){
 			/*@var $expression Expression*/
 			
 			// merge all joins

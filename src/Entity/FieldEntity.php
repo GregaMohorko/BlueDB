@@ -14,6 +14,7 @@ use Exception;
 use ReflectionClass;
 use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Criteria;
+use BlueDB\DataAccess\Session;
 use BlueDB\Entity\FieldTypeEnum;
 use BlueDB\Entity\PropertyTypeEnum;
 use BlueDB\Utility\StringUtility;
@@ -54,6 +55,62 @@ abstract class FieldEntity implements IFieldEntity
 	}
 	
 	/**
+	 * @param int $ID
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @param bool $inclOneToMany
+	 * @return FieldEntity
+	 */
+	public static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true)
+	{
+		$childClassName=get_called_class();
+		$session=new Session();
+		return $childClassName::loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+	}
+	
+	/**
+	 * @param int $ID
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @param bool $inclOneToMany
+	 * @param Session $session
+	 * @return FieldEntity
+	 */
+	protected static function loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	{
+		// this is a workaround, because PHP does not allow protected static abstract methods
+		throw new Exception("This method is abstract.");
+	}
+	
+	/**
+	 * @param Criteria $criteria
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @param bool $inclOneToMany
+	 * @return FieldEntity
+	 */
+	public static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true)
+	{
+		$childClassName=get_called_class();
+		$session=new Session();
+		return $childClassName::loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+	}
+	
+	/**
+	 * @param Criteria $criteria
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @param bool $inclOneToMany
+	 * @param Session $session
+	 * @return FieldEntity
+	 */
+	protected static function loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	{
+		// this is a workaround, because PHP does not allow protected static abstract methods
+		throw new Exception("This method is abstract.");
+	}
+	
+	/**
 	 * Is the same as calling loadListByCriteria with $criteria=null.
 	 * 
 	 * @param array $fields
@@ -61,10 +118,38 @@ abstract class FieldEntity implements IFieldEntity
 	 * @param bool $inclOneToMany
 	 * @return array
 	 */
-	static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=false)
+	public static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=true)
 	{
 		$childClassName=get_called_class();
 		return $childClassName::loadListByCriteria(null, $fields, $fieldsToIgnore, $inclOneToMany);
+	}
+	
+	/**
+	 * @param Criteria $criteria
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @param bool $inclOneToMany
+	 * @return array
+	 */
+	public static function loadListByCriteria($criteria, $fields=null, $fieldsToIgnore=null, $inclOneToMany=true)
+	{
+		$childClassName=get_called_class();
+		$session=new Session();
+		return $childClassName::loadListByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+	}
+	
+	/**
+	 * @param Criteria $criteria
+	 * @param array $fields
+	 * @param array $fieldsToIgnore
+	 * @param bool $inclOneToMany
+	 * @param Session $session
+	 * @return array
+	 */
+	protected static function loadListByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	{
+		// this is a workaround, because PHP does not allow protected static abstract methods
+		throw new Exception("This method is abstract.");
 	}
 	
 	/**
@@ -75,7 +160,7 @@ abstract class FieldEntity implements IFieldEntity
 	 * @param boolean $commit
 	 * @param bool $inclOneToMany
 	 */
-	public static function saveList($fieldEntities, $beginTransaction=true, $commit=true, $inclOneToMany=false)
+	public static function saveList($fieldEntities, $beginTransaction=true, $commit=true)
 	{
 		$calledClass=get_called_class();
 		
@@ -83,7 +168,7 @@ abstract class FieldEntity implements IFieldEntity
 			MySQL::beginTransaction();
 		
 		foreach($fieldEntities as $fieldEntity)
-			$calledClass::save($fieldEntity, false, false,$inclOneToMany);
+			$calledClass::save($fieldEntity, false, false);
 		
 		if($commit)
 			MySQL::commitTransaction();
@@ -96,9 +181,8 @@ abstract class FieldEntity implements IFieldEntity
 	 * @param boolean $beginTransaction
 	 * @param boolean $commit
 	 * @param array $fields
-	 * @param bool $inclOneToMany
 	 */
-	public static function updateList($fieldEntities,$beginTransaction=true,$commit=true,$fields=null,$inclOneToMany=false)
+	public static function updateList($fieldEntities,$beginTransaction=true,$commit=true,$fields=null)
 	{
 		$calledClass=get_called_class();
 		
@@ -106,10 +190,38 @@ abstract class FieldEntity implements IFieldEntity
 			MySQL::beginTransaction();
 		
 		foreach($fieldEntities as $fieldEntity)
-			$calledClass::update($fieldEntity, false, false, $fields,$inclOneToMany);
+			$calledClass::update($fieldEntity, false, false, $fields);
 		
 		if($commit)
 			MySQL::commitTransaction();
+	}
+	
+	/**
+	 * Does not delete child ManyToOne fields.
+	 * 
+	 * @param FieldEntity $fieldEntity
+	 * @param boolean $beginTransaction
+	 * @param boolean $commit
+	 */
+	public static function delete($fieldEntity, $beginTransaction=true, $commit=true)
+	{
+		$childClassName=get_called_class();
+		$session=new Session();
+		$childClassName::deleteInternal($fieldEntity,$beginTransaction,$commit,$session);
+	}
+	
+	/**
+	 * Does not delete child ManyToOne fields.
+	 * 
+	 * @param FieldEntity $fieldEntity
+	 * @param boolean $beginTransaction
+	 * @param boolean $commit
+	 * @param Session $session
+	 */
+	protected static function deleteInternal($fieldEntity,$beginTransaction,$commit,$session)
+	{
+		// this is a workaround, because PHP does not allow protected static abstract methods
+		throw new Exception("This method is abstract.");
 	}
 	
 	/**
@@ -145,12 +257,20 @@ abstract class FieldEntity implements IFieldEntity
 		$childClassName=get_called_class();
 		$fieldBaseConstName=$childClassName."::".$field;
 		$fieldType=constant($fieldBaseConstName."FieldType");
-		if($fieldType!=FieldTypeEnum::PROPERTY)
-			throw new Exception("Exists is only allowed for property type fields. Field '".$field."' is not a property type field in class '".$childClassName."'.");
+		
+		if($fieldType==FieldTypeEnum::MANY_TO_ONE){
+			if($value!==null && !is_int($value)){
+				throw new Exception("Exists is only allowed either for property type fields or for ManyToOne when the value is null or integer (to check for ID). Value '$value' is neither null or int.");
+			}
+			$fieldPropertyType=PropertyTypeEnum::INT;
+		}else if($fieldType!=FieldTypeEnum::PROPERTY){
+			throw new Exception("Exists is only allowed either for property type fields or for ManyToOne when the value is null or integer (to check for ID). Field '$field' is of unsupported property type on class '$childClassName'.");
+		}else{
+			$fieldPropertyType=constant($fieldBaseConstName."PropertyType");
+		}
 		
 		$childTableName=$childClassName::getTableName();
 		$fieldColumn=constant($fieldBaseConstName."Column");
-		$fieldPropertyType=constant($fieldBaseConstName."PropertyType");
 		
 		$query="SELECT EXISTS(SELECT 1 FROM ".$childTableName." WHERE (".$fieldColumn."=?)) AS result";
 		
