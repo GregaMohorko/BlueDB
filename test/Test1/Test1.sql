@@ -1,4 +1,6 @@
-DROP TABLE IF EXISTS User,UserType;
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS Car,User,UserType;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Create UserType Enum table
 CREATE TABLE UserType (
