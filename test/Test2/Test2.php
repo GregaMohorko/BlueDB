@@ -20,7 +20,7 @@ use Test2\Address;
 use Test2\Car;
 
 /**
- * Tests loading, updating, saving of StrongEntities for fields of type ManyToOne.
+ * Tests loading, updating, saving of StrongEntities for fields of type ManyToOne and OneToMany.
  * 
  * Also tests Criteria Expressions for these fields.
  */
@@ -63,11 +63,10 @@ class Test2 extends Test
 		assert($ryan->Name===null,"Ryans name not null");
 		assert($ryan->Address!=null,"Ryans address is null");
 		
-		// load all addresses with OneToMany too (users)
-		$addresses=Address::loadList(null, null, true);
-		assert(count($addresses[0]->Users)===1,"OneToMany count"); // rapture only has 1 user
-		assert($addresses[1]->Users[0]->Name==="Bruce","Gotham user"); // the user of Gotham is Bruce
-		// assume others are OK too ...
+		// load all addresses, but without OneToMany fields
+		$addresses=Address::loadList(null,null,false);
+		assert(count($addresses)===3,"Addresses count");
+		assert($addresses[1]->Users===null,"Address Users");
 	}
 	
 	private function testLoadListByCriteria()
@@ -130,7 +129,7 @@ class Test2 extends Test
 		$criteria->add(Expression::equal(User::class, User::AddressField, $address3));
 		/* @var $john User */
 		$john=User::loadByCriteria($criteria);
-		assert($john!=null,"John is null");
+		assert($john!=null,"John is not null");
 		$this->checkJohn($john);
 	}
 	
@@ -288,9 +287,12 @@ class Test2 extends Test
 	 */
 	private function checkRyan($ryan)
 	{
+		assert($ryan->ID===1,"Ryans ID");
 		assert($ryan->Name==="Ryan","Ryans name");
 		assert($ryan->Address!=null,"Ryans address");
 		assert($ryan->Address->Street=="Rapture","Ryan address street");
+		assert(count($ryan->Address->Users)===1,"Ryans address users count");
+		assert($ryan->Address->Users[0]->Name==="Ryan","Ryans address user");
 		assert($ryan->Car!=null,"Ryans car");
 		assert($ryan->Car->Brand==="Ford","Ryans car brand");
 		assert($ryan->Car->Owner->ID===$ryan->ID,"Ryans car owner");
@@ -305,9 +307,12 @@ class Test2 extends Test
 	 */
 	private function checkBruce($bruce)
 	{
+		assert($bruce->ID===2,"Bruces ID");
 		assert($bruce->Name==="Bruce","Bruces name");
 		assert($bruce->Address!=null,"Bruces address");
-		assert($bruce->Address->Street=="Gotham","Bruce address street");
+		assert($bruce->Address->Street=="Gotham","Bruces address street");
+		assert(count($bruce->Address->Users)===1,"Bruces address users count");
+		assert($bruce->Address->Users[0]->Name==="Bruce","Bruces address user");
 		assert($bruce->Car!=null,"Bruces car");
 		assert($bruce->Car->Brand==="Tank","Bruces car brand");
 		assert($bruce->Car->Owner->ID===$bruce->ID,"Bruces car owner");
@@ -322,9 +327,12 @@ class Test2 extends Test
 	 */
 	private function checkJohn($john)
 	{
+		assert($john->ID===3,"Johns ID");
 		assert($john->Name==="John","Johns name");
 		assert($john->Address!=null,"Johns address");
-		assert($john->Address->Street=="Citadel","John address street");
+		assert($john->Address->Street=="Citadel","Johns address street");
+		assert(count($john->Address->Users)===1,"Johns address users count");
+		assert($john->Address->Users[0]->Name==="John","Johns address user");
 		assert($john->Car!=null,"Johns car");
 		assert($john->Car->Brand==="Normandy","Johns car brand");
 		assert($john->Car->Owner->ID===$john->ID,"Johns car owner");

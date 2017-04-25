@@ -84,7 +84,7 @@ class Criteria
 								else
 									$isFirst=false;
 
-								$queryJoins.=$joinType." JOIN ".$joinTable." AS ".$joinName." ON ".$joinBasePlace.".".$joinBaseColumn."=".$joinName.".".$joinColumn;
+								$queryJoins.="$joinType JOIN $joinTable AS $joinName ON $joinBasePlace.$joinBaseColumn=$joinName.$joinColumn";
 							}
 						}
 					}

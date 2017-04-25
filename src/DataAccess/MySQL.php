@@ -111,8 +111,8 @@ class MySQL
 	 * Use this function when selecting multiple rows.
 	 * 
 	 * @param string $selectQuery
-	 * @param int $resultMode
-	 * @param int $resultType The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
+	 * @param int $resultMode [optional]
+	 * @param int $resultType [optional] The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
 	 * @return array
 	 * @throws Exception
 	 */
@@ -132,8 +132,8 @@ class MySQL
 	 * Use this function when selecting only one row.
 	 * 
 	 * @param string $selectQuery
-	 * @param int $resultMode
-	 * @param int $resultType The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
+	 * @param int $resultMode [optional]
+	 * @param int $resultType [optional] The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
 	 * @return array
 	 * @throws Exception
 	 */
@@ -273,7 +273,7 @@ class MySQL
 	 * 
 	 * @param string $sqlPreparedSelectStatement
 	 * @param array $parameters
-	 * @param int $resultType The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
+	 * @param int $resultType [optional] The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
 	 * @return array
 	 */
 	public static function prepareAndExecuteSelectStatement($sqlPreparedSelectStatement,$parameters,$resultType=MYSQLI_ASSOC)
@@ -290,7 +290,7 @@ class MySQL
 	 * 
 	 * @param string $sqlPreparedSelectStatement
 	 * @param array $parameters
-	 * @param int $resultType The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
+	 * @param int $resultType [optional] The possible values for this parameter are the constants MYSQLI_ASSOC, MYSQLI_NUM, or MYSQLI_BOTH.
 	 * @return array
 	 */
 	public static function prepareAndExecuteSelectSingleStatement($sqlPreparedSelectStatement,$parameters,$resultType=MYSQLI_ASSOC)

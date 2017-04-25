@@ -12,110 +12,17 @@ namespace BlueDB\DataAccess\Criteria;
 
 use Exception;
 use DateTime;
+use BlueDB\DataAccess\JoinType;
+use BlueDB\DataAccess\Joiner;
 use BlueDB\Entity\FieldTypeEnum;
 use BlueDB\Entity\PropertyTypeEnum;
 use BlueDB\Entity\SubEntity;
+use BlueDB\Entity\StrongEntity;
+use BlueDB\Entity\FieldEntity;
 use BlueDB\Utility\ArrayUtility;
 
 class Expression
 {
-	/**
-	 * @var int
-	 */
-	private static $_joinNameCounter=0;
-	
-	/**
-	 * @var array 5D: JoiningEntityClass -> JoinType -> JoinBasePlace -> JoinBaseColumn -> JoinColumn = JoinName
-	 */
-	private static $_joinNames=[];
-	
-	/**
-	 * @param string $joiningEntityClass Entity class that is joining.
-	 * @param string $joinType Type of the join.
-	 * @param string $joinBasePlace Place of the base joining. Can be a table (from FROM) or a previously created join.
-	 * @param string $joinBaseColumn Column of the joinBasePlace on which the join shall be made.
-	 * @param string $joinColumn Column of the joining entity on which the join shall be made.
-	 * @return string
-	 */
-	private static function getJoinName($joiningEntityClass,$joinType,$joinBasePlace,$joinBaseColumn,$joinColumn)
-	{
-		if(!isset(self::$_joinNames[$joiningEntityClass]))
-			self::$_joinNames[$joiningEntityClass]=[];
-		/*#var $arrayByClass array*/
-		$arrayByClass=self::$_joinNames[$joiningEntityClass];
-		
-		if(!isset($arrayByClass[$joinType]))
-			$arrayByClass[$joinType]=[];
-		/*@var $arrayByJoinType array*/
-		$arrayByJoinType=$arrayByClass[$joinType];
-		
-		if(!isset($arrayByJoinType[$joinBasePlace]))
-			$arrayByJoinType[$joinBasePlace]=[];
-		/*@var $arrayByJoinBasePlace array*/
-		$arrayByJoinBasePlace=$arrayByJoinType[$joinBasePlace];
-		
-		if(!isset($arrayByJoinBasePlace[$joinBaseColumn]))
-			$arrayByJoinBasePlace[$joinBaseColumn]=[];
-		/*@var $arrayByJoinBaseColumn array*/
-		$arrayByJoinBaseColumn=$arrayByJoinBasePlace[$joinBaseColumn];
-		
-		if(!isset($arrayByJoinBaseColumn[$joinColumn])){
-			self::$_joinNameCounter++;
-			$arrayByJoinBaseColumn[$joinColumn]="J".self::$_joinNameCounter;
-			
-			// has to change values, arrays do not update automatically ... (which is stupid from PHP)
-			$arrayByJoinBasePlace[$joinBaseColumn]=$arrayByJoinBaseColumn;
-			$arrayByJoinType[$joinBasePlace]=$arrayByJoinBasePlace;
-			$arrayByClass[$joinType]=$arrayByJoinType;
-			self::$_joinNames[$joiningEntityClass]=$arrayByClass;
-		}
-		
-		$joinName=$arrayByJoinBaseColumn[$joinColumn];
-		
-		return $joinName;
-	}
-	
-	/**
-	 * Creates a join out of the specified values.
-	 * 
-	 * @param string $class
-	 * @param string $joinBasePlace
-	 * @param string $joinBaseColumn
-	 * @param string $joinColumn
-	 * @param string $joinName
-	 * @return array
-	 */
-	private static function createJoin($class,$joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
-	{
-		$theJoin=[];
-		$theJoin[$class]=self::createJoinArray($joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
-		
-		return $theJoin;
-	}
-	
-	/**
-	 * Creates a join array out of the specified values.
-	 * 
-	 * @param string $joinBasePlace
-	 * @param string $joinBaseColumn
-	 * @param string $joinColumn
-	 * @param string $joinName
-	 * @return array
-	 */
-	private static function createJoinArray($joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
-	{
-		$type_BasePlace_BaseColumn=[];
-		$type_BasePlace_BaseColumn[$joinColumn]=$joinName;
-		$type_BasePlace=[];
-		$type_BasePlace[$joinBaseColumn]=$type_BasePlace_BaseColumn;
-		$typeJoin=[];
-		$typeJoin[$joinBasePlace]=$type_BasePlace;
-		$joinArray=[];
-		$joinArray[JoinType::INNER]=$typeJoin;
-		
-		return $joinArray;
-	}
-	
 	/**
 	 * @var string
 	 */
@@ -150,8 +57,8 @@ class Expression
 	 * @param string $entityClass
 	 * @param array $joins
 	 * @param string $term
-	 * @param array $values
-	 * @param array $valueTypes
+	 * @param array $values [optional]
+	 * @param array $valueTypes [optional]
 	 */
 	private function __construct($entityClass,$joins,$term,$values=null,$valueTypes=null)
 	{
@@ -178,20 +85,28 @@ class Expression
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
 	 * @param mixed $value Inclusive bottom value.
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function above($criteriaClass,$field,$value,$subEntityClass=null)
+	public static function above($criteriaClass,$field,$value,$parentClass=null)
 	{
-		return self::abovePrivate($criteriaClass, $field, $value, true, $subEntityClass);
+		return self::abovePrivate($criteriaClass, $field, $value, true, $parentClass);
 	}
 	
-	private static function abovePrivate($criteriaClass,$field,$value,$hasToPrepareStatement,$subEntityClass)
+	/**
+	 * @param string $criteriaClass
+	 * @param string $field
+	 * @param mixed $value
+	 * @param bool $hasToPrepareStatement
+	 * @param string $parentClass
+	 * @return Expression
+	 */
+	private static function abovePrivate($criteriaClass,$field,$value,$hasToPrepareStatement,$parentClass)
 	{
-		if($subEntityClass===null)
-			$subEntityClass=$criteriaClass;
+		if($parentClass===null)
+			$parentClass=$criteriaClass;
 		
-		$joiningFieldBaseConstName=$subEntityClass."::".$field;
+		$joiningFieldBaseConstName=$parentClass."::".$field;
 		$fieldType=constant($joiningFieldBaseConstName."FieldType");
 		if($fieldType!=FieldTypeEnum::PROPERTY)
 			throw new Exception("Only PROPERTY field types are allowed for after expressions.");
@@ -210,17 +125,17 @@ class Expression
 		
 		$valueS=PropertyTypeEnum::convertToString($value, $propertyType);
 		
-		if($criteriaClass==$subEntityClass){
-			$termName=$subEntityClass::getTableName();
+		if($criteriaClass==$parentClass){
+			$termName=$parentClass::getTableName();
 			$theJoin=null;
 		}else{
 			$joinBasePlace=$criteriaClass::getTableName();
 			$joinBaseColumn=$criteriaClass::getIDColumn();
-			$joinColumn=$subEntityClass::getIDColumn();
+			$joinColumn=$parentClass::getIDColumn();
 			
-			$joinName=self::getJoinName($subEntityClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
+			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
 			$termName=$joinName;
-			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$field." > ";
@@ -246,13 +161,13 @@ class Expression
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function afterNow($criteriaClass,$field,$subEntityClass=null)
+	public static function afterNow($criteriaClass,$field,$parentClass=null)
 	{
 		$dateTimeValue=new DateTime();
-		return self::abovePrivate($criteriaClass,$field,$dateTimeValue,false,$subEntityClass);
+		return self::abovePrivate($criteriaClass,$field,$dateTimeValue,false,$parentClass);
 	}
 	
 	/**
@@ -261,12 +176,12 @@ class Expression
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
 	 * @param type $dateTimeValue
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function after($criteriaClass,$field,$dateTimeValue,$subEntityClass=null)
+	public static function after($criteriaClass,$field,$dateTimeValue,$parentClass=null)
 	{
-		return self::abovePrivate($criteriaClass, $field, $dateTimeValue, true,$subEntityClass);
+		return self::abovePrivate($criteriaClass, $field, $dateTimeValue, true,$parentClass);
 	}
 	
 	/**
@@ -276,15 +191,15 @@ class Expression
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
 	 * @param mixed $min Inclusive min value.
 	 * @param mixed $max Inclusive max value.
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function between($criteriaClass,$field,$min,$max,$subEntityClass=null)
+	public static function between($criteriaClass,$field,$min,$max,$parentClass=null)
 	{
-		if($subEntityClass===null)
-			$subEntityClass=$criteriaClass;
+		if($parentClass===null)
+			$parentClass=$criteriaClass;
 		
-		$joiningFieldBaseConstName=$subEntityClass."::".$field;
+		$joiningFieldBaseConstName=$parentClass."::".$field;
 		$fieldType=constant($joiningFieldBaseConstName."FieldType");
 		if($fieldType!=FieldTypeEnum::PROPERTY)
 			throw new Exception("Only PROPERTY field types are allowed for between expressions. '".$fieldType."' was provided.");
@@ -304,17 +219,17 @@ class Expression
 		$minS=PropertyTypeEnum::convertToString($min, $propertyType);
 		$maxS=PropertyTypeEnum::convertToString($max, $propertyType);
 		
-		if($criteriaClass==$subEntityClass){
-			$termName=$subEntityClass::getTableName();
+		if($criteriaClass==$parentClass){
+			$termName=$parentClass::getTableName();
 			$theJoin=null;
 		}else{
 			$joinBasePlace=$criteriaClass::getTableName();
 			$joinBaseColumn=$criteriaClass::getIDColumn();
-			$joinColumn=$subEntityClass::getIDColumn();
+			$joinColumn=$parentClass::getIDColumn();
 			
-			$joinName=self::getJoinName($subEntityClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
+			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
 			$termName=$joinName;
-			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$field." BETWEEN ? AND ?";
@@ -333,14 +248,14 @@ class Expression
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field A text property field (of the restriction object), on which the restriction shall take place.
 	 * @param string $value Must be a string of length > 0.
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function contains($criteriaClass,$field,$value,$subEntityClass=null)
+	public static function contains($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($subEntityClass==null)
-			$subEntityClass=$criteriaClass;
-		$joiningFieldBaseConstName=$subEntityClass."::".$field;
+		if($parentClass==null)
+			$parentClass=$criteriaClass;
+		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
 		if($value===null)
 			throw new Exception("Null value is not allowed for contains expression.");
@@ -363,18 +278,18 @@ class Expression
 		}
 		
 		$column=constant($joiningFieldBaseConstName."Column");
-		if($criteriaClass==$subEntityClass){
+		if($criteriaClass==$parentClass){
 			// base class does not need an inner join
-			$termName=$subEntityClass::getTableName();
+			$termName=$parentClass::getTableName();
 			$theJoin=null;
 		}else{
 			$joinBasePlace=$criteriaClass::getTableName();
 			$joinBaseColumn=$criteriaClass::getIDColumn();
-			$joinColumn=$subEntityClass::getIDColumn();
+			$joinColumn=$parentClass::getIDColumn();
 
-			$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -383,7 +298,7 @@ class Expression
 		$values=[$valueAsString];
 		$valueTypes=[$valueType];
 
-		return new Expression($subEntityClass,$theJoin,$term,$values,$valueTypes);
+		return new Expression($parentClass,$theJoin,$term,$values,$valueTypes);
 	}
 	
 	/**
@@ -392,14 +307,14 @@ class Expression
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field A text property field (of the restriction object), on which the restriction shall take place.
 	 * @param string $value Must be a string of length > 0.
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function endsWith($criteriaClass,$field,$value,$subEntityClass=null)
+	public static function endsWith($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($subEntityClass==null)
-			$subEntityClass=$criteriaClass;
-		$joiningFieldBaseConstName=$subEntityClass."::".$field;
+		if($parentClass==null)
+			$parentClass=$criteriaClass;
+		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
 		if($value===null)
 			throw new Exception("Null value is not allowed for contains expression.");
@@ -422,18 +337,18 @@ class Expression
 		}
 		
 		$column=constant($joiningFieldBaseConstName."Column");
-		if($criteriaClass==$subEntityClass){
+		if($criteriaClass==$parentClass){
 			// base class does not need an inner join
-			$termName=$subEntityClass::getTableName();
+			$termName=$parentClass::getTableName();
 			$theJoin=null;
 		}else{
 			$joinBasePlace=$criteriaClass::getTableName();
 			$joinBaseColumn=$criteriaClass::getIDColumn();
-			$joinColumn=$subEntityClass::getIDColumn();
+			$joinColumn=$parentClass::getIDColumn();
 
-			$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -442,7 +357,7 @@ class Expression
 		$values=[$valueAsString];
 		$valueTypes=[$valueType];
 
-		return new Expression($subEntityClass,$theJoin,$term,$values,$valueTypes);
+		return new Expression($parentClass,$theJoin,$term,$values,$valueTypes);
 	}
 	
 	/**
@@ -451,34 +366,34 @@ class Expression
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
 	 * @param mixed $value Can be null. For ManyToOne fields, all properties that are not null will be included.
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Mixed Can be a single expression, or multiple ones (if comparing by a manyToOne field, creates multiple expressions that checks for equality to all not-null properties).
 	 */
-	public static function equal($criteriaClass,$field,$value,$subEntityClass=null)
+	public static function equal($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($subEntityClass==null)
-			$subEntityClass=$criteriaClass;
-		$joiningFieldBaseConstName=$subEntityClass."::".$field;
+		if($parentClass===null)
+			$parentClass=$criteriaClass;
+		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
 		if($value===null){
 			// if comparing for null, its always the same, no matter the type of the field
 			$column=constant($joiningFieldBaseConstName."Column");
-			if($criteriaClass==$subEntityClass){
-				// base class does not need an inner join
-				$termName=$subEntityClass::getTableName();
+			if($criteriaClass===$parentClass){
+				// base class does not need a join
+				$termName=$criteriaClass::getTableName();
 				$theJoin=null;
 			}else{
 				$joinBasePlace=$criteriaClass::getTableName();
 				$joinBaseColumn=$criteriaClass::getIDColumn();
-				$joinColumn=$subEntityClass::getIDColumn();
+				$joinColumn=$parentClass::getIDColumn();
 
-				$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+				$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 				$termName=$joinName;
-				$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+				$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 			}
 			$term=$termName.".".$column." IS NULL";
 			
-			return new Expression($subEntityClass,$theJoin,$term);
+			return new Expression($parentClass,$theJoin,$term);
 		}
 		
 		/*@var $type FieldTypeEnum*/
@@ -486,18 +401,18 @@ class Expression
 		switch($type){
 			case FieldTypeEnum::PROPERTY:
 				$column=constant($joiningFieldBaseConstName."Column");
-				if($criteriaClass==$subEntityClass){
+				if($criteriaClass==$parentClass){
 					// base class does not need an inner join
-					$termName=$subEntityClass::getTableName();
+					$termName=$parentClass::getTableName();
 					$theJoin=null;
 				}else{
 					$joinBasePlace=$criteriaClass::getTableName();
 					$joinBaseColumn=$criteriaClass::getIDColumn();
-					$joinColumn=$subEntityClass::getIDColumn();
+					$joinColumn=$parentClass::getIDColumn();
 					
-					$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+					$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 					$termName=$joinName;
-					$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+					$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 				}
 				$term=$termName.".".$column."=?";
 				$propertyType=constant($joiningFieldBaseConstName."PropertyType");
@@ -506,7 +421,7 @@ class Expression
 				$values=[$valueAsString];
 				$valueTypes=[$valueType];
 				
-				return new Expression($subEntityClass,$theJoin,$term,$values,$valueTypes);
+				return new Expression($parentClass,$theJoin,$term,$values,$valueTypes);
 			case FieldTypeEnum::MANY_TO_ONE:
 				// the $value is an Entity, check for all notnull PROPERTIES and use them for the expressions
 				$expressions=[];
@@ -514,7 +429,7 @@ class Expression
 				$joins=[];
 				
 				$join=null;
-				if($criteriaClass===$subEntityClass){
+				if($criteriaClass===$parentClass){
 					// no need to join, can just use base entity
 					$joinBasePlace=$criteriaClass::getTableName();
 				}else{
@@ -523,40 +438,44 @@ class Expression
 					// join 1/2: the mandatory join of subEntityClass with the criteria class
 					$mandatoryJoinBasePlace=$criteriaClass::getTableName();
 					$mandatoryJoinBaseColumn=$criteriaClass::getIDColumn();
-					$mandatoryJoinColumn=$subEntityClass::getIDColumn();
-					$mandatoryJoinName=self::getJoinName($subEntityClass, JoinType::INNER, $mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn);
-					$joins[$subEntityClass]=self::createJoinArray($mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn, $mandatoryJoinName);
+					$mandatoryJoinColumn=$parentClass::getIDColumn();
+					$mandatoryJoinName=Joiner::getJoinName($parentClass, JoinType::INNER, $mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn);
+					$joins[$parentClass]=Joiner::createJoinArray($mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn, $mandatoryJoinName);
 					
 					$joinBasePlace=$mandatoryJoinName;
 				}
 				
+				/* @var $class FieldEntity */
 				$class=constant($joiningFieldBaseConstName."Class");
 				$column=constant($joiningFieldBaseConstName."Column");
 				$fields=$class::getFieldList();
-				/*@var $object StrongEntity*/
+				/*@var $object FieldEntity*/
 				$object=$value;
 				
-				// let's check if only the ID is not null
-				$isOnlyIDNotNull=true;
-				$IDField=$class::getIDField();
-				foreach($fields as $field){
-					if($field===$IDField)
-						continue;
-					if($object->$field!==null){
-						$isOnlyIDNotNull=false;
-						break;
+				$isSubEntity=is_subclass_of($object, SubEntity::class);
+				
+				if(!$isSubEntity){
+					// let's check if only the ID is not null
+					$isOnlyIDNotNull=true;
+					foreach($fields as $field){
+						if($field===StrongEntity::IDField)
+							continue;
+						if($object->$field!==null){
+							$isOnlyIDNotNull=false;
+							break;
+						}
 					}
-				}
-				if($isOnlyIDNotNull){
-					// no need to join anything, can just compare the column to the raw int value of the ID (treat it like a normal property)
-					$value=$object->getID();
-					$term="$joinBasePlace.$column=?";
-					$valueAsString=PropertyTypeEnum::convertToString($value, PropertyTypeEnum::INT);
-					$valueType=PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
-					$values=[$valueAsString];
-					$valueTypes=[$valueType];
+					if($isOnlyIDNotNull){
+						// no need to join anything, can just compare the column to the raw int value of the ID (treat it like a normal property)
+						$value=$object->getID();
+						$term="$joinBasePlace.$column=?";
+						$valueAsString=PropertyTypeEnum::convertToString($value, PropertyTypeEnum::INT);
+						$valueType=PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
+						$values=[$valueAsString];
+						$valueTypes=[$valueType];
 
-					return new Expression($subEntityClass,$join,$term,$values,$valueTypes);
+						return new Expression($parentClass,$join,$term,$values,$valueTypes);
+					}
 				}
 				
 				// join 2/2: the join of restriction object class with the subEntityClass
@@ -565,8 +484,8 @@ class Expression
 				// It will happen when a table references itself ...
 				$joinBaseColumn=$column;
 				$joinColumn=$class::getIDColumn();
-				$joinName=self::getJoinName($class, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
-				$joins[$class]=self::createJoinArray($joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+				$joinName=Joiner::getJoinName($class, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
+				$joins[$class]=Joiner::createJoinArray($joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 				
 				foreach($fields as $joinField){
 					$joiningFieldBaseConstName="$class::$joinField";
@@ -594,7 +513,7 @@ class Expression
 				}
 				
 				// check if it's a SubEntity to also include the ID (because the ID is in ManyToOne parent and is ignored in the above foreach ...
-				if(is_subclass_of($object, SubEntity::class)){
+				if($isSubEntity){
 					$id=$object->getID();
 					if($id!==null){
 						$column=$object->getIDColumn();
@@ -618,14 +537,14 @@ class Expression
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field A text property field (of the restriction object), on which the restriction shall take place.
 	 * @param string $value Must be a string of length > 0.
-	 * @param string $subEntityClass Class of the sub entity object, that will be joined if needed.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function startsWith($criteriaClass,$field,$value,$subEntityClass=null)
+	public static function startsWith($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($subEntityClass==null)
-			$subEntityClass=$criteriaClass;
-		$joiningFieldBaseConstName=$subEntityClass."::".$field;
+		if($parentClass==null)
+			$parentClass=$criteriaClass;
+		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
 		if($value===null)
 			throw new Exception("Null value is not allowed for contains expression.");
@@ -648,18 +567,18 @@ class Expression
 		}
 		
 		$column=constant($joiningFieldBaseConstName."Column");
-		if($criteriaClass==$subEntityClass){
+		if($criteriaClass==$parentClass){
 			// base class does not need an inner join
-			$termName=$subEntityClass::getTableName();
+			$termName=$parentClass::getTableName();
 			$theJoin=null;
 		}else{
 			$joinBasePlace=$criteriaClass::getTableName();
 			$joinBaseColumn=$criteriaClass::getIDColumn();
-			$joinColumn=$subEntityClass::getIDColumn();
+			$joinColumn=$parentClass::getIDColumn();
 
-			$joinName=self::getJoinName($subEntityClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=self::createJoin($subEntityClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -668,7 +587,7 @@ class Expression
 		$values=[$valueAsString];
 		$valueTypes=[$valueType];
 
-		return new Expression($subEntityClass,$theJoin,$term,$values,$valueTypes);
+		return new Expression($parentClass,$theJoin,$term,$values,$valueTypes);
 	}
 	
 	/**

@@ -52,6 +52,13 @@ class Test1 extends Test
 		$this->checkAlyx($users[1]);
 		$this->checkBarney($users[2]);
 		
+		// should also load everything inside User table
+		$users=User::loadList([]);
+		assert(count($users)==3, "Count of all users");
+		$this->checkGordon($users[0]);
+		$this->checkAlyx($users[1]);
+		$this->checkBarney($users[2]);
+		
 		// should load all 3, but only the username and password for each
 		$users=User::loadList([User::UsernameField,User::PasswordField]);
 		assert(count($users)==3, "Count of all users");
@@ -332,6 +339,7 @@ class Test1 extends Test
 	 */
 	private function checkGordon($gordon)
 	{
+		assert($gordon->ID===1,"Gordons ID");
 		assert($gordon->Username==="Gordon","Gordons username");
 		// note that password is a hidden field, therefore it should only be loaded when explicitly asked for!
 		assert($gordon->Password===null,"Gordons password");
@@ -350,6 +358,7 @@ class Test1 extends Test
 	 */
 	private function checkAlyx($alyx)
 	{
+		assert($alyx->ID===2,"Alyxes ID");
 		assert($alyx->Username==="Alyx","Alyxes username");
 		assert($alyx->Password===null,"Alyxes password");
 		assert($alyx->Type===UserType::EDITOR,"Alyxes user type");
@@ -367,6 +376,7 @@ class Test1 extends Test
 	 */
 	private function checkBarney($barney)
 	{
+		assert($barney->ID===3,"Barneys ID");
 		assert($barney->Username==="Barney","Barneys username");
 		assert($barney->Password===null,"Barneys password");
 		assert($barney->Type===UserType::EDITOR,"Barneys user type");

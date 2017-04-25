@@ -93,11 +93,15 @@ class Session
 	/**
 	 * @param FieldEntity $entity
 	 * @param string $entityClass
+	 * @param int $ID [optional]
 	 */
-	public function add($entity,$entityClass)
+	public function add($entity,$entityClass,$ID=null)
 	{
+		if($ID===null)
+			$ID=$entity->getID();
+		
 		$classArray=(isset($this->entities[$entityClass])) ? $this->entities[$entityClass] : [];
-		$classArray[$entity->getID()]=$entity;
+		$classArray[$ID]=$entity;
 		$this->entities[$entityClass]=$classArray;
 	}
 }

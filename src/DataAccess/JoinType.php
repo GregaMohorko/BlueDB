@@ -8,7 +8,7 @@
  * @copyright Mar 14, 2017 Grega Mohorko
  */
 
-namespace BlueDB\DataAccess\Criteria;
+namespace BlueDB\DataAccess;
 
 abstract class JoinType
 {

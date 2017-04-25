@@ -18,9 +18,10 @@ if(!$config)
 require_once 'Configuration/BlueDBProperties.php';
 \BlueDB\Configuration\BlueDBProperties::init($config);
 
-require_once 'DataAccess/Criteria/JoinType.php';
 require_once 'DataAccess/Criteria/Expression.php';
 require_once 'DataAccess/Criteria/Criteria.php';
+require_once 'DataAccess/JoinType.php';
+require_once 'DataAccess/Joiner.php';
 require_once 'DataAccess/MySQL.php';
 require_once 'DataAccess/Session.php';
 require_once 'Entity/FieldTypeEnum.php';

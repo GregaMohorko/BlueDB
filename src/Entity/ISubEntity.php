@@ -20,7 +20,7 @@ interface ISubEntity extends IFieldEntity
 	static function getParentEntityClass();
 	
 	/**
-	 * Returns the base super class of this sub-entity. A base class must always be a StrongEntity.
+	 * Returns the base super class of this sub-entity. A base class is always a StrongEntity.
 	 * 
 	 * @return string Name of the StrongEntity class.
 	 */

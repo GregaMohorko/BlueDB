@@ -29,9 +29,9 @@ interface IAssociativeEntity extends IDatabaseTable
 	 * 
 	 * @param string $originSide
 	 * @param int $ID
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
+	 * @param array $fields [optional]
+	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclOneToMany [optional]
 	 * @return array
 	 */
 	static function loadListForSide($originSide,$ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=null);
@@ -44,9 +44,9 @@ interface IAssociativeEntity extends IDatabaseTable
 	 * @param string $originSide
 	 * @param int $ID
 	 * @param Criteria $criteria
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
+	 * @param array $fields [optional]
+	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclOneToMany [optional]
 	 * @return array
 	 */
 	static function loadListForSideByCriteria($mySQLConnection,$originSide,$ID,$criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=null);
@@ -54,48 +54,48 @@ interface IAssociativeEntity extends IDatabaseTable
 	/**
 	 * @param IFieldEntity $AObject
 	 * @param IFieldEntity $BObject
-	 * @param bool $beginTransaction
-	 * @param bool $commit
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	static function link($AObject,$BObject,$beginTransaction=true,$commit=true);
 	
 	/**
 	 * @param IFieldEntity $BObject
 	 * @param array $AList
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function linkMultipleA($BObject,$AList,$beginTransaction=true,$commit=true);
 	
 	/**
 	 * @param IFieldEntity $AObject
 	 * @param array $BList
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function linkMultipleB($AObject,$BList,$beginTransaction=true,$commit=true);
 	
 	/**
 	 * @param IFieldEntity $AObject
 	 * @param IFieldEntity $BObject
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function unlink($AObject,$BObject,$beginTransaction=true,$commit=true);
 	
 	/**
 	 * @param IFieldEntity $BObject
 	 * @param array $AList
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function unlinkMultipleA($BObject,$AList,$beginTransaction=true,$commit=true);
 	
 	/**
 	 * @param IFieldEntity $AObject
 	 * @param array $BList
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function unlinkMultipleB($AObject,$BList,$beginTransaction=true,$commit=true);
 }

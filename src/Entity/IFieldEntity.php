@@ -25,11 +25,6 @@ interface IFieldEntity extends IDatabaseTable
 	/**
 	 * @return string
 	 */
-	static function getIDField();
-	
-	/**
-	 * @return string
-	 */
 	static function getIDColumn();
 	
 	/**
@@ -39,18 +34,18 @@ interface IFieldEntity extends IDatabaseTable
 	
 	/**
 	 * @param int $ID
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
+	 * @param array $fields [optional]
+	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclOneToMany [optional]
 	 * @return IFieldEntity
 	 */
 	static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
 	
 	/**
 	 * @param Criteria $criteria
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
+	 * @param array $fields [optional]
+	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclOneToMany [optional]
 	 * @return IFieldEntity
 	 */
 	static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
@@ -58,18 +53,18 @@ interface IFieldEntity extends IDatabaseTable
 	/**
 	 * Is the same as calling loadListByCriteria with $criteria=null.
 	 * 
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
+	 * @param array $fields [optional]
+	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclOneToMany [optional]
 	 * @return array
 	 */
 	static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
 	
 	/**
 	 * @param Criteria $criteria
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
+	 * @param array $fields [optional]
+	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclOneToMany [optional]
 	 * @return array
 	 */
 	static function loadListByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
@@ -79,8 +74,8 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not save OneToMany & ManyToMany fields.
 	 * 
 	 * @param IFieldEntity $fieldEntity
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function save($fieldEntity,$beginTransaction=true,$commit=true);
 	
@@ -89,8 +84,8 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not save OneToMany & ManyToMany fields.
 	 * 
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function saveList($fieldEntities,$beginTransaction=true,$commit=true);
 	
@@ -99,36 +94,38 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not update OneToMany & ManyToMany fields.
 	 * 
 	 * @param IFieldEntity $fieldEntity
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
-	 * @param array $fields
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
+	 * @param array $fields [optional]
+	 * @param bool $updateParents [optional] Only important for SubEntities. It determines whether to update parent tables.
 	 */
-	static function update($fieldEntity,$beginTransaction=true,$commit=true,$fields=null);
+	static function update($fieldEntity,$beginTransaction=true,$commit=true,$fields=null,$updateParents=true);
 	
 	/**
 	 * Does not update ManyToOne fields, only sets the ID.
 	 * Does not update OneToMany & ManyToMany fields.
 	 * 
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
-	 * @param array $fields
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
+	 * @param array $fields [optional]
+	 * @param bool $updateParents [optional] Only important for SubEntities. It determines whether to update parent tables.
 	 */
-	static function updateList($fieldEntities,$beginTransaction=true,$commit=true,$fields=null);
+	static function updateList($fieldEntities,$beginTransaction=true,$commit=true,$fields=null,$updateParents=true);
 	
 	/**
 	 * Does not delete child ManyToOne fields.
 	 * 
 	 * @param IFieldEntity $fieldEntity
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function delete($fieldEntity,$beginTransaction=true,$commit=true);
 	
 	/**
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param boolean $beginTransaction [optional]
+	 * @param boolean $commit [optional]
 	 */
 	static function deleteList($fieldEntities,$beginTransaction=true,$commit=true);
 	
