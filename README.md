@@ -52,6 +52,10 @@ User::delete($gordon);
 
 These short examples were just the top of the iceberg, BlueDB has many many more cool features. To find them out and for more complex examples & tutorials, please go to [Wiki](https://github.com/GregaMohorko/bluedb/wiki).
 
+## Requirements
+
+PHP version >= 5.5
+
 ## License
 
 [Apache License 2.0](./LICENSE)
