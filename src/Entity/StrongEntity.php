@@ -84,7 +84,7 @@ abstract class StrongEntity extends FieldEntity
 		$manyToOneFieldsToLoad=null;
 		$oneToManyListsToLoad=null;
 		$fieldsOfParent=null;
-		$query=self::prepareSelectQuery($childClassName, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclOneToMany,$oneToManyListsToLoad,false,null,$fieldsOfParent);
+		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclOneToMany,$oneToManyListsToLoad,false,null,$fieldsOfParent);
 		
 		$loadedArray=self::executeSelectSingleQuery($query, $criteria);
 		if($loadedArray===null)
@@ -111,16 +111,16 @@ abstract class StrongEntity extends FieldEntity
 		$manyToOneFieldsToLoad=null;
 		$oneToManyListsToLoad=null;
 		$fieldsOfParent=null;
-		$query=self::prepareSelectQuery($childClassName, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclOneToMany,$oneToManyListsToLoad,false,null,$fieldsOfParent);
+		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclOneToMany,$oneToManyListsToLoad,false,null,$fieldsOfParent);
 		
-		$loadedArray=self::executeSelectQuery($query, $criteria);
-		if(empty($loadedArray))
+		$loadedArrays=self::executeSelectQuery($query, $criteria);
+		if(empty($loadedArrays))
 			return [];
 		
 		$loadedEntities=[];
 		
 		$addToSession=self::shouldAddToSession($fields, $fieldsToIgnore, $inclOneToMany);
-		foreach($loadedArray as $array){
+		foreach($loadedArrays as $array){
 			$loadedEntities[]=self::createInstance($childClassName, $array,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$addToSession,$session,false,null,null,null);
 		}
 		
@@ -132,8 +132,8 @@ abstract class StrongEntity extends FieldEntity
 	 * Does not save OneToMany & ManyToMany fields.
 	 * 
 	 * @param StrongEntity $strongEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	public static function save($strongEntity,$beginTransaction=true,$commit=true)
 	{
@@ -146,8 +146,8 @@ abstract class StrongEntity extends FieldEntity
 	 * Does not update OneToMany & ManyToMany fields.
 	 * 
 	 * @param StrongEntity $strongEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 * @param array $fields [optional]
 	 * @param bool $updateParents [optional] Only important for SubEntities. It determines whether to update parent tables.
 	 */
@@ -172,8 +172,8 @@ abstract class StrongEntity extends FieldEntity
 	 * Does not delete child ManyToOne fields.
 	 * 
 	 * @param StrongEntity $strongEntity
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param bool $beginTransaction
+	 * @param bool $commit
 	 * @param Session $session
 	 */
 	protected static function deleteInternal($strongEntity,$beginTransaction,$commit,$session)

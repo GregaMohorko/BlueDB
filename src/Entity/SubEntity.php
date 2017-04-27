@@ -99,7 +99,7 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$manyToOneFieldsToLoad=null;
 		$oneToManyListsToLoad=null;
 		$fieldsOfParent=null;
-		$query=self::prepareSelectQuery($childClassName, $criteria, $fields, $fieldsToIgnore, $manyToOneFieldsToLoad, $inclOneToMany, $oneToManyListsToLoad,true,$parentFieldName,$fieldsOfParent);
+		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore, $manyToOneFieldsToLoad, $inclOneToMany, $oneToManyListsToLoad,true,$parentFieldName,$fieldsOfParent);
 		
 		$loadedArray=self::executeSelectSingleQuery($query, $criteria);
 		if($loadedArray===null)
@@ -129,22 +129,22 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$manyToOneFieldsToLoad=null;
 		$oneToManyListsToLoad=null;
 		$fieldsOfParent=null;
-		$query=self::prepareSelectQuery($childClassName, $criteria, $fields, $fieldsToIgnore, $manyToOneFieldsToLoad, $inclOneToMany, $oneToManyListsToLoad,true,$parentFieldName,$fieldsOfParent);
+		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore, $manyToOneFieldsToLoad, $inclOneToMany, $oneToManyListsToLoad,true,$parentFieldName,$fieldsOfParent);
 		
 		if($fields!==null && empty($fieldsOfParent)){
 			// if fields were specified and fields of parent are empty, always include the ID of the parent ...
 			$fieldsOfParent=[StrongEntity::IDField];
 		}
 		
-		$loadedArray=self::executeSelectQuery($query, $criteria);
-		if(empty($loadedArray))
+		$loadedArrays=self::executeSelectQuery($query, $criteria);
+		if(empty($loadedArrays))
 			return [];
 		
 		$loadedSubEntities=[];
 		
 		$parentClass=$childClassName::getParentEntityClass();
 		$addToSession=self::shouldAddToSession($fields, $fieldsToIgnore, $inclOneToMany);
-		foreach($loadedArray as $array){
+		foreach($loadedArrays as $array){
 			$loadedSubEntities[]=self::createInstance($childClassName, $array, $manyToOneFieldsToLoad, $oneToManyListsToLoad, $addToSession, $session, true, $parentClass,$parentFieldName,$fieldsOfParent);
 		}
 		
@@ -157,8 +157,8 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 	 * Does not save OneToMany & ManyToMany fields.
 	 * 
 	 * @param SubEntity $subEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	public static function save($subEntity, $beginTransaction=true, $commit=true)
 	{
@@ -171,8 +171,8 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 	 * Does not update OneToMany & ManyToMany fields.
 	 * 
 	 * @param SubEntity $subEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 * @param array $fields [optional]
 	 * @param bool $updateParents [optional] Only important for SubEntities. It determines whether to update parent tables.
 	 */
@@ -197,8 +197,8 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 	 * Does not delete child ManyToOne fields.
 	 * 
 	 * @param SubEntity $subEntity
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param bool $beginTransaction
+	 * @param bool $commit
 	 * @param Session $session
 	 */
 	protected static function deleteInternal($subEntity,$beginTransaction,$commit,$session)

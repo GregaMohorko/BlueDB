@@ -21,7 +21,7 @@ use BlueDB\Entity\FieldTypeEnum;
 use BlueDB\Entity\PropertyTypeEnum;
 use BlueDB\Utility\StringUtility;
 
-abstract class FieldEntity implements IFieldEntity
+abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 {
 	/**
 	 * Lookup table for field lists of entity classes.
@@ -172,8 +172,8 @@ abstract class FieldEntity implements IFieldEntity
 	 * Does not save ManyToOne fields, only sets the ID.
 	 * 
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 * @param bool $inclOneToMany [optional]
 	 */
 	public static function saveList($fieldEntities, $beginTransaction=true, $commit=true)
@@ -195,8 +195,8 @@ abstract class FieldEntity implements IFieldEntity
 	 * Does not update OneToMany & ManyToMany fields.
 	 * 
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 * @param array $fields [optional]
 	 * @param bool $updateParents [optional] Only important for SubEntities. It determines whether to update parent tables.
 	 */
@@ -218,8 +218,8 @@ abstract class FieldEntity implements IFieldEntity
 	 * Does not delete child ManyToOne fields.
 	 * 
 	 * @param FieldEntity $fieldEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	public static function delete($fieldEntity, $beginTransaction=true, $commit=true)
 	{
@@ -232,8 +232,8 @@ abstract class FieldEntity implements IFieldEntity
 	 * Does not delete child ManyToOne fields.
 	 * 
 	 * @param FieldEntity $fieldEntity
-	 * @param boolean $beginTransaction
-	 * @param boolean $commit
+	 * @param bool $beginTransaction
+	 * @param bool $commit
 	 * @param Session $session
 	 */
 	protected static function deleteInternal($fieldEntity,$beginTransaction,$commit,$session)
@@ -246,8 +246,8 @@ abstract class FieldEntity implements IFieldEntity
 	 * Does not delete child ManyToOne fields.
 	 * 
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	public static function deleteList($fieldEntities,$beginTransaction=true,$commit=true)
 	{
@@ -318,7 +318,7 @@ abstract class FieldEntity implements IFieldEntity
 	
 	/**
 	 * @param Criteria $criteria
-	 * @return boolean TRUE if an entry exists that meets criterias restrictions.
+	 * @return bool TRUE if an entry exists that meets criterias restrictions.
 	 */
 	public static function existsByCriteria($criteria)
 	{
@@ -340,292 +340,6 @@ abstract class FieldEntity implements IFieldEntity
 			$result=MySQL::selectSingle($query);
 		
 		return $result["result"]==1;
-	}
-	
-	/**
-	 * @param string $childClassName
-	 * @param Criteria $criteria
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param array $manyToOneFieldsToLoad
-	 * @param boolean $inclOneToMany
-	 * @param array $oneToManyListsToLoad
-	 * @param bool $isSubEntity
-	 * @param string $parentFieldName
-	 * @param array $fieldsOfParent
-	 * @return string Query.
-	 */
-	protected static function prepareSelectQuery($childClassName,$criteria,$fields,$fieldsToIgnore,&$manyToOneFieldsToLoad,$inclOneToMany,&$oneToManyListsToLoad,$isSubEntity,$parentFieldName,&$fieldsOfParent)
-	{
-		if($criteria!==null && $childClassName!==$criteria->BaseEntityClass)
-			throw new Exception("Criterias BaseEntityClass (".$criteria->BaseEntityClass.") is different than the called child class ($childClassName).");
-		
-		$baseEntityTableName=$childClassName::getTableName();
-		if($isSubEntity)
-			$useFieldsOfParent=true;
-		
-		if(empty($fields)){
-			$fields=$childClassName::getFieldList();
-			if($isSubEntity)
-				$useFieldsOfParent=false;
-		}
-		
-		$manyToOneFieldsToLoad=[];
-		$oneToManyListsToLoad=[];
-		if($isSubEntity && $useFieldsOfParent)
-			$fieldsOfParent=[];
-		
-		$query="SELECT ";
-		if($isSubEntity)
-			$query.="$baseEntityTableName.".$childClassName::getIDColumn()." AS $parentFieldName";
-		else
-			$isFirst=true;
-		foreach($fields as $field){
-			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore))
-				continue;
-			
-			$fieldBaseConstName="$childClassName::$field";
-			$fieldTypeConstName=$fieldBaseConstName."FieldType";
-			if($isSubEntity && $useFieldsOfParent && !defined($fieldTypeConstName)){
-				// this field is in parent entity ...
-				$fieldsOfParent[]=$field;
-				continue;
-			}
-			$fieldType=constant($fieldTypeConstName);
-			
-			switch($fieldType){
-				case FieldTypeEnum::PROPERTY:
-					if(!$isSubEntity && $isFirst)
-						$isFirst=false;
-					else
-						$query.=",";
-					
-					$fieldColumn=constant($fieldBaseConstName."Column");
-					
-					$query.="$baseEntityTableName.$fieldColumn AS $field";
-					break;
-				case FieldTypeEnum::MANY_TO_ONE:
-					if(!$isSubEntity && $isFirst)
-						$isFirst=false;
-					else
-						$query.=",";
-					
-					$fieldColumn=constant($fieldBaseConstName."Column");
-					
-					$manyToOneField=[];
-					$manyToOneField["Field"]=$field;
-					$manyToOneField["Class"]=constant($fieldBaseConstName."Class");
-					
-					$manyToOneFieldsToLoad[]=$manyToOneField;
-					
-					$query.="$baseEntityTableName.$fieldColumn AS $field";
-					break;
-				case FieldTypeEnum::ONE_TO_MANY:
-					if(!$inclOneToMany)
-						break;
-					$oneToManyList=[];
-					$oneToManyList["Field"]=$field;
-					$oneToManyList["Class"]=constant($fieldBaseConstName."Class");
-					$oneToManyList["Identifier"]=constant($fieldBaseConstName."Identifier");
-					$oneToManyListsToLoad[]=$oneToManyList;
-					break;
-				case FieldTypeEnum::MANY_TO_MANY:
-					throw new Exception("ManyToMany field is currently not yet supported for loading from here.");
-				default:
-					throw new Exception("FieldType of type '$fieldType' is not supported.");
-			}
-		}
-		
-		$query.=" FROM $baseEntityTableName";
-		
-		if($criteria!==null){
-			$criteria->prepare();
-			if(!empty($criteria->PreparedQueryJoins))
-				$query.=" ".$criteria->PreparedQueryJoins;
-			if(!empty($criteria->PreparedQueryRestrictions))
-				$query.=" WHERE ".$criteria->PreparedQueryRestrictions;
-		}
-		
-		return $query;
-	}
-	
-	/**
-	 * @param string $selectQuery
-	 * @param Criteria $criteria
-	 * @return array
-	 */
-	protected static function executeSelectQuery($selectQuery,$criteria)
-	{
-		if($criteria!==null && count($criteria->PreparedParameters)>1)
-			return MySQL::prepareAndExecuteSelectStatement($selectQuery, $criteria->PreparedParameters);
-		
-		return MySQL::select($selectQuery);
-	}
-	
-	/**
-	 * @param string $selectSingleQuery
-	 * @param Criteria $criteria
-	 * @return array
-	 */
-	protected static function executeSelectSingleQuery($selectSingleQuery,$criteria)
-	{
-		if(count($criteria->PreparedParameters)>1)
-			return MySQL::prepareAndExecuteSelectSingleStatement($selectSingleQuery,$criteria->PreparedParameters);
-		
-		return MySQL::selectSingle($selectSingleQuery);
-	}
-	
-	/**
-	 * Determines whether it should add loaded entities to the session.
-	 * 
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
-	 * @return bool
-	 */
-	protected static function shouldAddToSession($fields,$fieldsToIgnore,$inclOneToMany)
-	{
-		return $fields===null && $fieldsToIgnore===null && $inclOneToMany===true;
-	}
-	
-	/**
-	 * @param string $entityClass
-	 * @param array $fieldValues
-	 * @param array $manyToOneFieldsToLoad
-	 * @param array $oneToManyListsToLoad
-	 * @param bool $addToSession
-	 * @param Session $session
-	 * @param bool $isSubEntity
-	 * @param string $parentClass
-	 * @param string $parentFieldName
-	 * @param array $fieldsOfParent
-	 * @return FieldEntity
-	 */
-	protected static function createInstance($entityClass,$fieldValues,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$addToSession,$session,$isSubEntity,$parentClass,$parentFieldName,$fieldsOfParent)
-	{
-		$newEntity=new $entityClass();
-		self::setFieldValues($newEntity, $fieldValues,$isSubEntity, $entityClass);
-		
-		$manyToOneNotEmpty=!empty($manyToOneFieldsToLoad);
-		$oneToManyNotEmpty=!empty($oneToManyListsToLoad);
-		
-		$ID=$isSubEntity?intval($newEntity->$parentFieldName):$newEntity->ID;
-		
-		if($addToSession)
-			$session->add($newEntity, $entityClass,$ID);
-		
-		if($manyToOneNotEmpty)
-			self::loadManyToOneFields($newEntity, $manyToOneFieldsToLoad,$session);
-		if($isSubEntity)
-			$newEntity->$parentFieldName=$parentClass::loadByID($ID,$fieldsOfParent);
-		if($oneToManyNotEmpty)
-			self::loadOneToManyLists($entityClass, $newEntity, $oneToManyListsToLoad,$session);
-		
-		return $newEntity;
-	}
-	
-	/**
-	 * @param FieldEntity $entity
-	 * @param array $manyToOneFieldsToLoad
-	 * @param Session $session
-	 */
-	protected static function loadManyToOneFields($entity,$manyToOneFieldsToLoad,$session)
-	{
-		foreach($manyToOneFieldsToLoad as $manyToOneField){
-			$manyToOneFieldName=$manyToOneField["Field"];
-			$manyToOneClass=$manyToOneField["Class"];
-			$foreignKey=$entity->$manyToOneFieldName;
-			
-			if($foreignKey==null)
-				continue;
-			
-			// first, let's try to look it up in the Session
-			$lookUpResult=$session->lookUp($manyToOneClass, $foreignKey);
-			if($lookUpResult!==false){
-				$manyToOneEntity=$lookUpResult;
-			}else{
-				$manyToOneEntity=$manyToOneClass::loadByIDInternal($foreignKey,null,null,true,$session);
-			}
-			
-			$entity->$manyToOneFieldName=$manyToOneEntity;
-		}
-	}
-	
-	/**
-	 * @param string $entityClass
-	 * @param FieldEntity $entity
-	 * @param array $oneToManyLists
-	 * @param Session $session
-	 */
-	protected static function loadOneToManyLists($entityClass,$entity,$oneToManyLists,$session)
-	{
-		$ID=$entity->getID();
-		
-		/* @var $entityDTO FieldEntity */
-		$entityDTO=new $entityClass();
-		$entityDTO->setID($ID);
-		foreach($oneToManyLists as $oneToManyList){
-			$oneToManyFieldName=$oneToManyList["Field"];
-			$oneToManyClass=$oneToManyList["Class"];
-			$identifier=$oneToManyList["Identifier"];
-			
-			// first, let's try to look it up in the Session
-			$lookUpResult=$session->lookUpByOneToMany($oneToManyClass, $identifier, $ID);
-			if($lookUpResult!==false){
-				$list=$lookUpResult;
-			}else{
-				$criteria=new Criteria($oneToManyClass);
-				$criteria->add(Expression::equal($oneToManyClass, $identifier, $entityDTO));
-				$list=$oneToManyClass::loadListByCriteriaInternal($criteria,null,null,true,$session);
-				foreach($list as $item)
-					$item->$identifier=$entity;
-			}
-			
-			$entity->$oneToManyFieldName=$list;
-		}
-	}
-	
-	/**
-	 * @param FieldEntity $entity
-	 * @param array $fieldValues
-	 * @param bool $isSubEntity
-	 * @param string $entityClass [optional] Class type of the entity. If not provided, the class is determined with get_class function.
-	 */
-	protected static function setFieldValues($entity,$fieldValues,$isSubEntity,$entityClass=null)
-	{
-		if($entityClass==null)
-			$entityClass=get_class($entity);
-		
-		$isSubEntity=is_subclass_of($entityClass, SubEntity::class);
-		if($isSubEntity)
-			$parentFieldName=$entityClass::getParentFieldName();
-		
-		foreach($fieldValues as $fieldName => $fieldValue){
-			if(!property_exists($entityClass, $fieldName))
-				throw new Exception("The property '".$fieldName."' does not exist in class '".$entityClass."'.");
-			
-			if($isSubEntity && $fieldName==$parentFieldName){
-				// parent field of sub entity is definitely an entity
-				$entity->$fieldName=$fieldValue;
-				continue;
-			}
-			
-			$baseFieldConstName="$entityClass::$fieldName";
-			$fieldType=constant($baseFieldConstName."FieldType");
-			switch($fieldType){
-				case FieldTypeEnum::PROPERTY:
-					$propertyType=constant($baseFieldConstName."PropertyType");
-					$entity->$fieldName=PropertyTypeCreator::create($fieldValue, $propertyType);
-					break;
-				case FieldTypeEnum::MANY_TO_ONE:
-				case FieldTypeEnum::ONE_TO_MANY:
-				case FieldTypeEnum::MANY_TO_MANY:
-					$entity->$fieldName=$fieldValue;
-					break;
-				default:
-					throw new Exception("The field type '$fieldType' is not supported.");
-			}
-		}
 	}
 	
 	/**

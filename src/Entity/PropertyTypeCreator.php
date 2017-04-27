@@ -90,7 +90,7 @@ abstract class PropertyTypeCreator
 	
 	/**
 	 * @param mixed $value
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function createBool($value)
 	{

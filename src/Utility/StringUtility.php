@@ -15,7 +15,7 @@ abstract class StringUtility
 	/**
 	 * @param string $haystack
 	 * @param string $needle
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function startsWith($haystack,$needle)
 	{
@@ -25,7 +25,7 @@ abstract class StringUtility
 	/**
 	 * @param string $haystack
 	 * @param string $needle
-	 * @return boolean
+	 * @return bool
 	 */
 	public static function endsWith($haystack,$needle)
 	{

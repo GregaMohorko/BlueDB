@@ -74,8 +74,8 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not save OneToMany & ManyToMany fields.
 	 * 
 	 * @param IFieldEntity $fieldEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	static function save($fieldEntity,$beginTransaction=true,$commit=true);
 	
@@ -84,8 +84,8 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not save OneToMany & ManyToMany fields.
 	 * 
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	static function saveList($fieldEntities,$beginTransaction=true,$commit=true);
 	
@@ -94,8 +94,8 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not update OneToMany & ManyToMany fields.
 	 * 
 	 * @param IFieldEntity $fieldEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 * @param array $fields [optional]
 	 * @param bool $updateParents [optional] Only important for SubEntities. It determines whether to update parent tables.
 	 */
@@ -106,8 +106,8 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not update OneToMany & ManyToMany fields.
 	 * 
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 * @param array $fields [optional]
 	 * @param bool $updateParents [optional] Only important for SubEntities. It determines whether to update parent tables.
 	 */
@@ -117,15 +117,15 @@ interface IFieldEntity extends IDatabaseTable
 	 * Does not delete child ManyToOne fields.
 	 * 
 	 * @param IFieldEntity $fieldEntity
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	static function delete($fieldEntity,$beginTransaction=true,$commit=true);
 	
 	/**
 	 * @param array $fieldEntities
-	 * @param boolean $beginTransaction [optional]
-	 * @param boolean $commit [optional]
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
 	 */
 	static function deleteList($fieldEntities,$beginTransaction=true,$commit=true);
 	
@@ -134,13 +134,13 @@ interface IFieldEntity extends IDatabaseTable
 	 * 
 	 * @param string $field
 	 * @param mixed $value
-	 * @return boolean TRUE if the provided value exists in the provided fields column in the called entity table.
+	 * @return bool TRUE if the provided value exists in the provided fields column in the called entity table.
 	 */
 	static function exists($field,$value);
 	
 	/**
 	 * @param Criteria $criteria
-	 * @return boolean TRUE if an entry exists that meets criterias restrictions.
+	 * @return bool TRUE if an entry exists that meets criterias restrictions.
 	 */
 	static function existsByCriteria($criteria);
 }

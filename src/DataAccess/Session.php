@@ -50,7 +50,7 @@ class Session
 	 * @param string $entityClass
 	 * @param string $manyToOneField
 	 * @param int $ID
-	 * @return array|boolean An array of entities whose the specified ManyToOne field entity has the specified ID, or FALSE if no such entity exists.
+	 * @return array|bool An array of entities whose the specified ManyToOne field entity has the specified ID, or FALSE if no such entity exists.
 	 */
 	public function lookUpByOneToMany($entityClass,$manyToOneField,$ID)
 	{
