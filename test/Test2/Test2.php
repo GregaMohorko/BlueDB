@@ -20,7 +20,7 @@ use Test2\Address;
 use Test2\Car;
 
 /**
- * Tests loading, updating, saving of StrongEntities for fields of type ManyToOne and OneToMany.
+ * Tests loading, updating, saving and deleting StrongEntities with fields of type ManyToOne and OneToMany.
  * 
  * Also tests Criteria Expressions for these fields.
  */

@@ -18,7 +18,7 @@ use Test1\User;
 use Test1\UserType;
 
 /**
- * Tests loading,exists,updating,saving and deleting of StrongEntities for fields of type Property.
+ * Tests loading, exists, updating, saving and deleting of StrongEntities for fields of type Property.
  * 
  * Also tests Criteria Expressions (for properties only): above, after, between, contains, equal, any, startsWith, endsWith.
  */

@@ -22,7 +22,7 @@ use Test3\Teacher;
 use Test3\Address;
 
 /**
- * Tests loading, updating and saving of SubEntities.
+ * Tests loading, updating, saving and deleting SubEntities.
  */
 class Test3 extends Test
 {

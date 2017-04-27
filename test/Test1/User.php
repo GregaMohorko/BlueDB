@@ -61,7 +61,7 @@ class User extends StrongEntity
 	const CashColumn=self::CashField;
 	const CashPropertyType=PropertyTypeEnum::FLOAT;
 	/**
-	 * @var boolean
+	 * @var bool
 	 */
 	public $IsOkay;
 	const IsOkayField="IsOkay";
