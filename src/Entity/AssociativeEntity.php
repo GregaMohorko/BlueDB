@@ -19,6 +19,24 @@ use BlueDB\DataAccess\Criteria\Expression;
 abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEntity
 {
 	/**
+	 * Returns the opposite side of the specified side.
+	 * 
+	 * @param string $side
+	 * @return string
+	 */
+	public static function getOppositeSide($side)
+	{
+		$calledClass=get_called_class();
+		$sideA=$calledClass::getSideA();
+		$sideB=$calledClass::getSideB();
+		if($side===$sideA)
+			return $sideB;
+		if($side===$sideB)
+			return $sideA;
+		throw new Exception("The specified side '$side' does not exist in associative entity '$calledClass'.");
+	}
+	
+	/**
 	 * Loads a list of entities for the provided origin side.
 	 * 
 	 * For example: If origin side A is provided, objects of type B will be loaded. And vice versa.
@@ -87,16 +105,7 @@ abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEn
 	{
 		$calledClass=get_called_class();
 		
-		$sideA=$calledClass::getSideA();
-		$sideB=$calledClass::getSideB();
-		
-		// determine which side to load
-		if($originSide===$sideA)
-			$sideToLoad=$sideB;
-		else if($originSide===$sideB)
-			$sideToLoad=$sideA;
-		else
-			throw new Exception("The specified side '$originSide' does not exist in associative entity '$calledClass'.");
+		$sideToLoad=$calledClass::getOppositeSide($originSide);
 		
 		$toLoadBaseConstName="$calledClass::$sideToLoad";
 		$toLoadClass=constant($toLoadBaseConstName."Class");

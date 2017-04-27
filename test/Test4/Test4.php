@@ -22,6 +22,8 @@ use Test4\Student_Subject;
 
 /**
  * Tests loading, linking and unlinking using AssociativeEntities.
+ * 
+ * Also test expressions designed for associative entities.
  */
 class Test4 extends Test
 {
@@ -40,6 +42,7 @@ class Test4 extends Test
 		$this->testUnlink();
 		$this->testUnlinkMultiple();
 		$this->testLinkMultiple();
+		$this->testExpressions();
 	}
 	
 	private function testLoadListForSide()
@@ -163,5 +166,36 @@ class Test4 extends Test
 		assert($studentsOfMath[0]->Name==="Leon","Linking multiple students with Math");
 		assert($studentsOfMath[1]->Name==="Matic","Linking multiple students with Math");
 		assert($studentsOfMath[2]->Name==="Tadej","Linking multiple students with Math");
+	}
+	
+	private function testExpressions()
+	{
+		// first unlink Tadej and Geography
+		$tadej=Student::loadByID(3);
+		$geography=Subject::loadByID(3);
+		Student_Subject::unlink($tadej, $geography,true,false);
+		
+		// load all subjects that nobody is connected to
+		$criteria=new Criteria(Subject::class);
+		$criteria->add(Expression::isNotIn(Subject::class, Student_Subject::class, Student_Subject::SubjectsSide));
+		$subjects=Subject::loadListByCriteria($criteria);
+		assert(count($subjects)===1,"Expression notIn");
+		assert($subjects[0]->Name==="Geography","Expression notIn");
+		
+		// load all students that have no subjects
+		$criteria=new Criteria(Student::class);
+		$criteria->add(Expression::isNotIn(Student::class, Student_Subject::class, Student_Subject::StudentsSide));
+		$students=Student::loadListByCriteria($criteria);
+		assert(empty($students),"Expression notIn");
+		
+		// unlink Leon with his only subject (Math)
+		$leon=Student::loadByID(1);
+		$math=Subject::loadByID(1);
+		Student_Subject::unlink($leon, $math,false,true);
+		
+		// now load all students that have no subjects again
+		$students=Student::loadListByCriteria($criteria);
+		assert(count($students)===1,"Expression notIn");
+		assert($students[0]->Name==="Leon","Expression notIn");
 	}
 }

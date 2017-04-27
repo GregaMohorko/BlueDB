@@ -135,7 +135,7 @@ class Expression
 			
 			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
 			$termName=$joinName;
-			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$field." > ";
@@ -229,7 +229,7 @@ class Expression
 			
 			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
 			$termName=$joinName;
-			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$field." BETWEEN ? AND ?";
@@ -289,7 +289,7 @@ class Expression
 
 			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -373,7 +373,7 @@ class Expression
 
 			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";
@@ -414,7 +414,7 @@ class Expression
 
 				$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 				$termName=$joinName;
-				$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+				$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 			}
 			$term=$termName.".".$column." IS NULL";
 			
@@ -437,7 +437,7 @@ class Expression
 					
 					$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 					$termName=$joinName;
-					$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+					$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 				}
 				$term=$termName.".".$column."=?";
 				$propertyType=constant($joiningFieldBaseConstName."PropertyType");
@@ -465,7 +465,7 @@ class Expression
 					$mandatoryJoinBaseColumn=$criteriaClass::getIDColumn();
 					$mandatoryJoinColumn=$parentClass::getIDColumn();
 					$mandatoryJoinName=Joiner::getJoinName($parentClass, JoinType::INNER, $mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn);
-					$joins[$parentClass]=Joiner::createJoinArray($mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn, $mandatoryJoinName);
+					$joins[$parentClass]=Joiner::createJoinArray(JoinType::INNER, $mandatoryJoinBasePlace, $mandatoryJoinBaseColumn, $mandatoryJoinColumn, $mandatoryJoinName);
 					
 					$joinBasePlace=$mandatoryJoinName;
 				}
@@ -510,7 +510,7 @@ class Expression
 				$joinBaseColumn=$column;
 				$joinColumn=$class::getIDColumn();
 				$joinName=Joiner::getJoinName($class, JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn);
-				$joins[$class]=Joiner::createJoinArray($joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+				$joins[$class]=Joiner::createJoinArray(JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 				
 				foreach($fields as $joinField){
 					$joiningFieldBaseConstName="$class::$joinField";
@@ -554,6 +554,31 @@ class Expression
 			default:
 				throw new Exception("The provided field is of unsupported field type '".$type."'.");
 		}
+	}
+	
+	/**
+	 * Used for ManyToMany relationships.
+	 * Loads only those rows that are NOT in the specified associative relationship. For example: if we have a User_Right associative relationship, and we only want to load those users who have no rights, we would use this expression as isNotIn(User::class, User_Right::class, User_Right::UsersSide).
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $associativeClass Associative class where at least one side is the same as the specified criteria class.
+	 * @param string $side Side of the association where the specified criteria class is.
+	 * @return Expression
+	 */
+	public static function isNotIn($criteriaClass,$associativeClass,$side)
+	{
+		$fieldBaseConstName="$associativeClass::$side";
+		
+		$joinBasePlace=$criteriaClass::getTableName();
+		$joinBaseColumn=$criteriaClass::getIDColumn();
+		$joinColumn=constant($fieldBaseConstName."Column");
+		$joinName=Joiner::getJoinName($associativeClass, JoinType::LEFT_OUTER, $joinBasePlace, $joinBaseColumn, $joinColumn);
+		$theJoin=Joiner::createJoin($associativeClass, JoinType::LEFT_OUTER, $joinBasePlace, $joinBaseColumn, $joinColumn,$joinName);
+		
+		// ignore all
+		$term="$joinName.$joinColumn IS NULL";
+		
+		return new Expression($associativeClass,$theJoin,$term);
 	}
 	
 	/**
@@ -603,7 +628,7 @@ class Expression
 
 			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 			$termName=$joinName;
-			$theJoin=Joiner::createJoin($parentClass,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+			$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
 		$term=$termName.".".$column." LIKE ?";

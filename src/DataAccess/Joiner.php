@@ -75,16 +75,17 @@ abstract class Joiner
 	 * Creates a join out of the specified values.
 	 * 
 	 * @param string $class
+	 * @param JoinType $joinType
 	 * @param string $joinBasePlace
 	 * @param string $joinBaseColumn
 	 * @param string $joinColumn
 	 * @param string $joinName
 	 * @return array
 	 */
-	public static function createJoin($class,$joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
+	public static function createJoin($class,$joinType,$joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
 	{
 		$theJoin=[];
-		$theJoin[$class]=self::createJoinArray($joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+		$theJoin[$class]=self::createJoinArray($joinType, $joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		
 		return $theJoin;
 	}
@@ -92,13 +93,14 @@ abstract class Joiner
 	/**
 	 * Creates a join array out of the specified values.
 	 * 
+	 * @param JoinType $joinType
 	 * @param string $joinBasePlace
 	 * @param string $joinBaseColumn
 	 * @param string $joinColumn
 	 * @param string $joinName
 	 * @return array
 	 */
-	public static function createJoinArray($joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
+	public static function createJoinArray($joinType,$joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
 	{
 		$type_BasePlace_BaseColumn=[];
 		$type_BasePlace_BaseColumn[$joinColumn]=$joinName;
@@ -107,7 +109,7 @@ abstract class Joiner
 		$typeJoin=[];
 		$typeJoin[$joinBasePlace]=$type_BasePlace;
 		$joinArray=[];
-		$joinArray[JoinType::INNER]=$typeJoin;
+		$joinArray[$joinType]=$typeJoin;
 		
 		return $joinArray;
 	}

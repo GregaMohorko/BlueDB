@@ -23,6 +23,14 @@ interface IAssociativeEntity extends IDatabaseTable
 	static function getSideB();
 	
 	/**
+	 * Returns the opposite side of the specified side.
+	 * 
+	 * @param string $side
+	 * @return string
+	 */
+	static function getOppositeSide($side);
+	
+	/**
 	 * Loads a list of entities for the provided origin side.
 	 * 
 	 * For example: If origin side A is provided, objects of type B will be loaded. And vice versa.
