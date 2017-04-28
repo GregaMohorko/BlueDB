@@ -35,39 +35,42 @@ abstract class Joiner
 	 */
 	public static function getJoinName($joiningEntityClass,$joinType,$joinBasePlace,$joinBaseColumn,$joinColumn)
 	{
-		if(!isset(self::$_joinNames[$joiningEntityClass]))
-			self::$_joinNames[$joiningEntityClass]=[];
-		/*#var $arrayByClass array*/
-		$arrayByClass=self::$_joinNames[$joiningEntityClass];
-		
-		if(!isset($arrayByClass[$joinType]))
-			$arrayByClass[$joinType]=[];
-		/*@var $arrayByJoinType array*/
-		$arrayByJoinType=$arrayByClass[$joinType];
-		
-		if(!isset($arrayByJoinType[$joinBasePlace]))
-			$arrayByJoinType[$joinBasePlace]=[];
-		/*@var $arrayByJoinBasePlace array*/
-		$arrayByJoinBasePlace=$arrayByJoinType[$joinBasePlace];
-		
-		if(!isset($arrayByJoinBasePlace[$joinBaseColumn]))
-			$arrayByJoinBasePlace[$joinBaseColumn]=[];
-		/*@var $arrayByJoinBaseColumn array*/
-		$arrayByJoinBaseColumn=$arrayByJoinBasePlace[$joinBaseColumn];
-		
-		if(!isset($arrayByJoinBaseColumn[$joinColumn])){
-			self::$_joinNameCounter++;
-			$arrayByJoinBaseColumn[$joinColumn]="J".self::$_joinNameCounter;
-			
-			// has to change values, arrays do not update automatically ... (which is stupid from PHP)
-			$arrayByJoinBasePlace[$joinBaseColumn]=$arrayByJoinBaseColumn;
-			$arrayByJoinType[$joinBasePlace]=$arrayByJoinBasePlace;
-			$arrayByClass[$joinType]=$arrayByJoinType;
-			self::$_joinNames[$joiningEntityClass]=$arrayByClass;
+		if(isset(self::$_joinNames[$joiningEntityClass])){
+			$arrayByClass=&self::$_joinNames[$joiningEntityClass];
+		}else{
+			$arrayByClass=[];
+			self::$_joinNames[$joiningEntityClass]=&$arrayByClass;
 		}
 		
-		$joinName=$arrayByJoinBaseColumn[$joinColumn];
+		if(isset($arrayByClass[$joinType])){
+			$arrayByJoinType=&$arrayByClass[$joinType];
+		}else{
+			$arrayByJoinType=[];
+			$arrayByClass[$joinType]=&$arrayByJoinType;
+		}
 		
+		if(isset($arrayByJoinType[$joinBasePlace])){
+			$arrayByJoinBasePlace=&$arrayByJoinType[$joinBasePlace];
+		}else{
+			$arrayByJoinBasePlace=[];
+			$arrayByJoinType[$joinBasePlace]=&$arrayByJoinBasePlace;
+		}
+		
+		if(isset($arrayByJoinBasePlace[$joinBaseColumn])){
+			$arrayByJoinBaseColumn=&$arrayByJoinBasePlace[$joinBaseColumn];
+		}else{
+			$arrayByJoinBaseColumn=[];
+			$arrayByJoinBasePlace[$joinBaseColumn]=&$arrayByJoinBaseColumn;
+		}
+		
+		if(isset($arrayByJoinBaseColumn[$joinColumn])){
+			return $arrayByJoinBaseColumn[$joinColumn];
+		}
+		
+		++self::$_joinNameCounter;
+		$joinName="J".self::$_joinNameCounter;
+		$arrayByJoinBaseColumn[$joinColumn]=$joinName;
+
 		return $joinName;
 	}
 	

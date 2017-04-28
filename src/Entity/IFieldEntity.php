@@ -37,18 +37,20 @@ interface IFieldEntity extends IDatabaseTable
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return IFieldEntity
 	 */
-	static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
+	static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=null,$inclManyToMany=null);
 	
 	/**
 	 * @param Criteria $criteria
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return IFieldEntity
 	 */
-	static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
+	static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=null,$inclManyToMany=null);
 	
 	/**
 	 * Is the same as calling loadListByCriteria with $criteria=null.
@@ -56,18 +58,20 @@ interface IFieldEntity extends IDatabaseTable
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
+	static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=null,$inclManyToMany=null);
 	
 	/**
 	 * @param Criteria $criteria
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	static function loadListByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
+	static function loadListByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=null,$inclManyToMany=null);
 	
 	/**
 	 * Does not save ManyToOne fields, only sets the ID.

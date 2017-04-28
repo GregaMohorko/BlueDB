@@ -18,90 +18,177 @@ use BlueDB\Entity\FieldEntity;
 class Session
 {
 	 /**
-	  * Contains a list of already fully loaded entities.
+	  * Contains a list of already loaded entities.
 	  * 
-	  * Keys: class > ID > [entity,bool]
+	  * Keys: class > ID
 	  * 
 	  * @var array
 	  */
 	private $entities;
 	
+	/**
+	 * Contains a list of already loaded OneToMany lists.
+	 * 
+	 * Keys: class > OneToMany field > ID
+	 * 
+	 * @var array
+	 */
+	private $oneToManyLists;
+	
+	/**
+	 * Contains a list of already loaded ManyToMany lists.
+	 * 
+	 * Keys: class > ManyToMany field > ID
+	 * 
+	 * @var array
+	 */
+	private $manyToManyLists;
+	
 	public function __construct()
 	{
 		$this->entities=[];
+		$this->oneToManyLists=[];
+		$this->manyToManyLists=[];
 	}
 	
 	/**
 	 * @param string $entityClass
 	 * @param int $ID
-	 * @return FieldEntity|Boolean The entity with the specified class and id, or FALSE if it doesn't exist.
+	 * @return FieldEntity|bool The entity with the specified class and id, or FALSE if it doesn't exist.
 	 */
 	public function lookUp($entityClass,$ID)
 	{
-		if(!isset($this->entities[$entityClass]))
-			return false;
-		$classArray=$this->entities[$entityClass];
-		if(!isset($classArray[$ID]))
-			return false;
-		return $classArray[$ID];
-	}
-	
-	/**
-	 * @param string $entityClass
-	 * @param string $manyToOneField
-	 * @param int $ID
-	 * @return array|bool An array of entities whose the specified ManyToOne field entity has the specified ID, or FALSE if no such entity exists.
-	 */
-	public function lookUpByOneToMany($entityClass,$manyToOneField,$ID)
-	{
-		if(!isset($this->entities[$entityClass]))
-			return false;
-		$classArray=$this->entities[$entityClass];
-		
-		$result=[];
-		$foundAtLeastOne=false;
-		foreach($classArray as $persistedEntity){
-			/* @var $persistedEntity FieldEntity */
-			
-			if($persistedEntity->$manyToOneField!==null){
-				$manyToOneFieldValue=$persistedEntity->$manyToOneField;
-				if(is_int($manyToOneFieldValue)){
-					// is still as a foreign key
-					$id=$manyToOneFieldValue;
-				}else if(is_string($manyToOneFieldValue)){
-					// sometimes it is as a string ...
-					$id=intval($manyToOneFieldValue);
-				}else{
-					// is already an object
-					/* @var $manyToOneEntity FieldEntity */
-					$manyToOneEntity=$manyToOneFieldValue;
-					$id=$manyToOneEntity->getID();
-				}
-				if($id===$ID){
-					$foundAtLeastOne=true;
-					$result[]=$persistedEntity;
-				}
-			}
+		if(!isset($this->entities[$entityClass])){
+			return false;	
 		}
-		
-		if($foundAtLeastOne)
-			return $result;
-		
-		return false;
+		$classArray=$this->entities[$entityClass];
+		if(!isset($classArray[$ID])){
+			return false;	
+		}
+		return $classArray[$ID];
 	}
 	
 	/**
 	 * @param FieldEntity $entity
 	 * @param string $entityClass
 	 * @param int $ID [optional]
+	 * @return bool True, if the entity was added, or false, if an entity of the same class and ID already exists.
 	 */
-	public function add($entity,$entityClass,$ID=null)
+	public function add($entity,$entityClass,$ID)
 	{
-		if($ID===null)
-			$ID=$entity->getID();
+		if(isset($this->entities[$entityClass])){
+			$classArray=&$this->entities[$entityClass];
+			if(isset($classArray[$ID])){
+				return false;
+			}
+		}else{
+			$classArray=[];
+			$this->entities[$entityClass]=&$classArray;
+		}
 		
-		$classArray=(isset($this->entities[$entityClass])) ? $this->entities[$entityClass] : [];
 		$classArray[$ID]=$entity;
-		$this->entities[$entityClass]=$classArray;
+		return true;
+	}
+	
+	/**
+	 * @param string $entityClass
+	 * @param string $oneToManyField
+	 * @param int $ID
+	 * @return array|bool
+	 */
+	public function &lookUpOneToManyList($entityClass,$oneToManyField,$ID)
+	{
+		if(!isset($this->oneToManyLists[$entityClass])){
+			$false=false;
+			return $false;
+		}
+		$classArray=$this->oneToManyLists[$entityClass];
+		if(!isset($classArray[$oneToManyField])){
+			$false=false;
+			return $false;
+		}
+		$fieldArray=$classArray[$oneToManyField];
+		if(!isset($fieldArray[$ID])){
+			$false=false;
+			return $false;
+		}
+		return $fieldArray[$ID];
+	}
+	
+	/**
+	 * @param string $entityClass
+	 * @param string $oneToManyField
+	 * @param int $ID
+	 * @return array
+	 */
+	public function &reserveOneToManyList($entityClass,$oneToManyField,$ID)
+	{
+		if(isset($this->oneToManyLists[$entityClass])){
+			$classArray=&$this->oneToManyLists[$entityClass];
+		}else{
+			$classArray=[];
+			$this->oneToManyLists[$entityClass]=&$classArray;
+		}
+		if(isset($classArray[$oneToManyField])){
+			$fieldArray=&$classArray[$oneToManyField];
+		}else{
+			$fieldArray=[];
+			$classArray[$oneToManyField]=&$fieldArray;
+		}
+		$newList=[];
+		$fieldArray[$ID]=&$newList;
+		
+		return $newList;
+	}
+	
+	/**
+	 * @param string $entityClass
+	 * @param string $manyToManyField
+	 * @param int $ID
+	 * @return array|bool
+	 */
+	public function &lookUpManyToManyList($entityClass,$manyToManyField,$ID)
+	{
+		if(!isset($this->manyToManyLists[$entityClass])){
+			$false=false;
+			return $false;
+		}
+		$classArray=$this->manyToManyLists[$entityClass];
+		if(!isset($classArray[$manyToManyField])){
+			$false=false;
+			return $false;
+		}
+		$fieldArray=$classArray[$manyToManyField];
+		if(!isset($fieldArray[$ID])){
+			$false=false;
+			return $false;
+		}
+		return $fieldArray[$ID];
+	}
+	
+	/**
+	 * @param string $entityClass
+	 * @param string $manyToManyField
+	 * @param int $ID
+	 * @return array
+	 */
+	public function &reserveManyToManyList($entityClass,$manyToManyField,$ID)
+	{
+		if(isset($this->manyToManyLists[$entityClass])){
+			$classArray=&$this->manyToManyLists[$entityClass];
+		}else{
+			$classArray=[];
+			$this->manyToManyLists[$entityClass]=&$classArray;
+		}
+		if(isset($classArray[$manyToManyField])){
+			$fieldArray=&$classArray[$manyToManyField];
+		}else{
+			$fieldArray=[];
+			$classArray[$manyToManyField]=&$fieldArray;
+		}
+		$newList=[];
+		$fieldArray[$ID]=&$newList;
+		
+		return $newList;
 	}
 }

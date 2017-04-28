@@ -55,43 +55,47 @@ abstract class StrongEntity extends FieldEntity
 	 * @param int $ID
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return StrongEntity
 	 */
-	protected static function loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	protected static function loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
 	{
 		$childClassName=get_called_class();
 		
 		$criteria=new Criteria($childClassName);
 		$criteria->add(Expression::equal($childClassName, self::IDField, $ID));
 		
-		return $childClassName::loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+		return $childClassName::loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 	}
 	
 	/**
 	 * @param Criteria $criteria
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return StrongEntity
 	 */
-	protected static function loadByCriteriaInternal($criteria, $fields, $fieldsToIgnore, $inclOneToMany, $session)
+	protected static function loadByCriteriaInternal($criteria, $fields, $fieldsToIgnore, $inclManyToOne, $inclOneToMany, $inclManyToMany, $session)
 	{
 		$childClassName=get_called_class();
 		
 		$manyToOneFieldsToLoad=null;
 		$oneToManyListsToLoad=null;
+		$manyToManyListsToLoad=null;
 		$fieldsOfParent=null;
-		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclOneToMany,$oneToManyListsToLoad,false,null,$fieldsOfParent);
+		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$oneToManyListsToLoad,$inclManyToMany,$manyToManyListsToLoad,false,null,$fieldsOfParent);
 		
 		$loadedArray=self::executeSelectSingleQuery($query, $criteria);
 		if($loadedArray===null)
 			return null;
 		
-		$addToSession=self::shouldAddToSession($fields, $fieldsToIgnore, $inclOneToMany);
-		$loadedEntity=self::createInstance($childClassName, $loadedArray,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$addToSession,$session,false,null,null,null);
+		$loadedEntity=self::createInstance($childClassName, $loadedArray,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$manyToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session,false,null,null,null,null);
 		
 		return $loadedEntity;
 	}
@@ -100,18 +104,21 @@ abstract class StrongEntity extends FieldEntity
 	 * @param Criteria $criteria
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return array
 	 */
-	protected static function loadListByCriteriaInternal($criteria, $fields, $fieldsToIgnore, $inclOneToMany, $session)
+	protected static function loadListByCriteriaInternal($criteria, $fields, $fieldsToIgnore, $inclManyToOne, $inclOneToMany, $inclManyToMany, $session)
 	{
 		$childClassName=get_called_class();
 		
 		$manyToOneFieldsToLoad=null;
 		$oneToManyListsToLoad=null;
+		$manyToManyListsToLoad=null;
 		$fieldsOfParent=null;
-		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclOneToMany,$oneToManyListsToLoad,false,null,$fieldsOfParent);
+		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$oneToManyListsToLoad,$inclManyToMany,$manyToManyListsToLoad,false,null,$fieldsOfParent);
 		
 		$loadedArrays=self::executeSelectQuery($query, $criteria);
 		if(empty($loadedArrays))
@@ -119,9 +126,8 @@ abstract class StrongEntity extends FieldEntity
 		
 		$loadedEntities=[];
 		
-		$addToSession=self::shouldAddToSession($fields, $fieldsToIgnore, $inclOneToMany);
 		foreach($loadedArrays as $array){
-			$loadedEntities[]=self::createInstance($childClassName, $array,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$addToSession,$session,false,null,null,null);
+			$loadedEntities[]=self::createInstance($childClassName, $array,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$manyToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session,false,null,null,null,null);
 		}
 		
 		return $loadedEntities;

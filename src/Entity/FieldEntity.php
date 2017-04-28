@@ -74,25 +74,30 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 * @param int $ID
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclManyToOne [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return FieldEntity
 	 */
-	public static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true)
+	public static function loadByID($ID,$fields=null,$fieldsToIgnore=null,$inclManyToOne=null,$inclOneToMany=null,$inclManyToMany=null)
 	{
+		self::checkConfig($inclManyToOne,$inclOneToMany,$inclManyToMany);
 		$childClassName=get_called_class();
 		$session=new Session();
-		return $childClassName::loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+		return $childClassName::loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 	}
 	
 	/**
 	 * @param int $ID
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return FieldEntity
 	 */
-	protected static function loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	protected static function loadByIDInternal($ID,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
 	{
 		// this is a workaround, because PHP does not allow protected static abstract methods
 		throw new Exception("This method is abstract.");
@@ -102,25 +107,30 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 * @param Criteria $criteria
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclManyToOne [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return FieldEntity
 	 */
-	public static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true)
+	public static function loadByCriteria($criteria,$fields=null,$fieldsToIgnore=null,$inclManyToOne=null,$inclOneToMany=null,$inclManyToMany=null)
 	{
+		self::checkConfig($inclManyToOne,$inclOneToMany,$inclManyToMany);
 		$childClassName=get_called_class();
 		$session=new Session();
-		return $childClassName::loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+		return $childClassName::loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 	}
 	
 	/**
 	 * @param Criteria $criteria
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return FieldEntity
 	 */
-	protected static function loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	protected static function loadByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany, $inclManyToMany,$session)
 	{
 		// this is a workaround, because PHP does not allow protected static abstract methods
 		throw new Exception("This method is abstract.");
@@ -131,38 +141,45 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 * 
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclManyToOne [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	public static function loadList($fields=null,$fieldsToIgnore=null,$inclOneToMany=true)
+	public static function loadList($fields=null,$fieldsToIgnore=null,$inclManyToOne=null,$inclOneToMany=null,$inclManyToMany=null)
 	{
 		$childClassName=get_called_class();
-		return $childClassName::loadListByCriteria(null, $fields, $fieldsToIgnore, $inclOneToMany);
+		return $childClassName::loadListByCriteria(null, $fields, $fieldsToIgnore, $inclManyToOne, $inclOneToMany, $inclManyToMany);
 	}
 	
 	/**
 	 * @param Criteria $criteria
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclManyToOne [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	public static function loadListByCriteria($criteria, $fields=null, $fieldsToIgnore=null, $inclOneToMany=true)
+	public static function loadListByCriteria($criteria, $fields=null, $fieldsToIgnore=null, $inclManyToOne=null, $inclOneToMany=null, $inclManyToMany=null)
 	{
+		self::checkConfig($inclManyToOne,$inclOneToMany,$inclManyToMany);
 		$childClassName=get_called_class();
 		$session=new Session();
-		return $childClassName::loadListByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+		return $childClassName::loadListByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 	}
 	
 	/**
 	 * @param Criteria $criteria
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return array
 	 */
-	protected static function loadListByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	protected static function loadListByCriteriaInternal($criteria,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
 	{
 		// this is a workaround, because PHP does not allow protected static abstract methods
 		throw new Exception("This method is abstract.");
@@ -635,7 +652,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$field=$pointingBackArray["Field"];
 			$criteria=new Criteria($class);
 			$criteria->add(Expression::equal($class, $field, $dto));
-			$objects=$class::loadListByCriteriaInternal($criteria,[StrongEntity::IDField],null,false,$session);
+			$objects=$class::loadListByCriteriaInternal($criteria,[StrongEntity::IDField],null,false,false,false,$session);
 			if(empty($objects))
 				// nobody is pointing to the entity being deleted
 				continue;

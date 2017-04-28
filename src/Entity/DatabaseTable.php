@@ -11,12 +11,34 @@
 namespace BlueDB\Entity;
 
 use Exception;
+use BlueDB\Configuration\BlueDBProperties;
 use BlueDB\DataAccess\MySQL;
+use BlueDB\DataAccess\Session;
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
 
 abstract class DatabaseTable implements IDatabaseTable
 {
+	/**
+	 * Checks if values are set or if they have to be set to default values as specified in the configuration file.
+	 * 
+	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
+	 */
+	protected static function checkConfig(&$inclManyToOne,&$inclOneToMany,&$inclManyToMany)
+	{
+		if($inclManyToOne!==null && $inclOneToMany!==null && $inclManyToMany!==null)
+			return;
+		
+		$config=BlueDBProperties::Instance();
+		if($inclManyToOne===null)
+			$inclManyToOne=$config->includeManyToOne;
+		if($inclOneToMany===null)
+			$inclOneToMany=$config->includeOneToMany;
+		if($inclManyToMany===null)
+			$inclManyToMany=$config->includeManyToMany;
+	}
+	
 	/**
 	 * @param string $fieldEntityClass Base class.
 	 * @param string $classToLoad Class from which the fields will be loaded. Often it is the same as the $fieldEntityClass.
@@ -25,14 +47,17 @@ abstract class DatabaseTable implements IDatabaseTable
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
 	 * @param array $manyToOneFieldsToLoad
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
 	 * @param array $oneToManyListsToLoad
+	 * @param bool $inclManyToMany
+	 * @param array $manyToManyListsToLoad
 	 * @param bool $isSubEntity
 	 * @param string $parentFieldName
 	 * @param array $fieldsOfParent
 	 * @return string Query.
 	 */
-	protected static function prepareSelectQuery($fieldEntityClass,$classToLoad,$joinColumn,$criteria,$fields,$fieldsToIgnore,&$manyToOneFieldsToLoad,$inclOneToMany,&$oneToManyListsToLoad,$isSubEntity,$parentFieldName,&$fieldsOfParent)
+	protected static function prepareSelectQuery($fieldEntityClass,$classToLoad,$joinColumn,$criteria,$fields,$fieldsToIgnore,&$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,&$oneToManyListsToLoad,$inclManyToMany,&$manyToManyListsToLoad,$isSubEntity,$parentFieldName,&$fieldsOfParent)
 	{
 		$toLoadTableName=$classToLoad::getTableName();
 		if($isSubEntity)
@@ -46,17 +71,20 @@ abstract class DatabaseTable implements IDatabaseTable
 		
 		$manyToOneFieldsToLoad=[];
 		$oneToManyListsToLoad=[];
+		$manyToManyListsToLoad=[];
 		if($isSubEntity && $useFieldsOfParent)
 			$fieldsOfParent=[];
 		
 		$query="SELECT ";
 		if($isSubEntity){
-			$isFirst=false;
 			$query.="$toLoadTableName.".$classToLoad::getIDColumn()." AS $parentFieldName";
-		} else
-			$isFirst=true;
+		} else{
+			$query.="$toLoadTableName.".StrongEntity::IDColumn." AS ".StrongEntity::IDField;
+		}
 		foreach($fields as $field){
 			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore))
+				continue;
+			if($field===StrongEntity::IDField)
 				continue;
 			
 			$fieldBaseConstName="$classToLoad::$field";
@@ -70,21 +98,13 @@ abstract class DatabaseTable implements IDatabaseTable
 			
 			switch($fieldType){
 				case FieldTypeEnum::PROPERTY:
-					if(!$isFirst)
-						$query.=",";
-					else
-						$isFirst=false;
-					
 					$fieldColumn=constant($fieldBaseConstName."Column");
 					
-					$query.="$toLoadTableName.$fieldColumn AS $field";
+					$query.=",$toLoadTableName.$fieldColumn AS $field";
 					break;
 				case FieldTypeEnum::MANY_TO_ONE:
-					if(!$isFirst)
-						$query.=",";
-					else
-						$isFirst=false;
-					
+					if(!$inclManyToOne)
+						break;
 					$fieldColumn=constant($fieldBaseConstName."Column");
 					
 					$manyToOneField=[];
@@ -93,7 +113,7 @@ abstract class DatabaseTable implements IDatabaseTable
 					
 					$manyToOneFieldsToLoad[]=$manyToOneField;
 					
-					$query.="$toLoadTableName.$fieldColumn AS $field";
+					$query.=",$toLoadTableName.$fieldColumn AS $field";
 					break;
 				case FieldTypeEnum::ONE_TO_MANY:
 					if(!$inclOneToMany)
@@ -105,7 +125,14 @@ abstract class DatabaseTable implements IDatabaseTable
 					$oneToManyListsToLoad[]=$oneToManyList;
 					break;
 				case FieldTypeEnum::MANY_TO_MANY:
-					throw new Exception("ManyToMany field is currently not yet supported for loading from here.");
+					if(!$inclManyToMany)
+						break;
+					$manyToManyList=[];
+					$manyToManyList["Field"]=$field;
+					$manyToManyList["Class"]=constant($fieldBaseConstName."Class");
+					$manyToManyList["Side"]=constant($fieldBaseConstName."Side");
+					$manyToManyListsToLoad[]=$manyToManyList;
+					break;
 				default:
 					throw new Exception("FieldType of type '$fieldType' is not supported.");
 			}
@@ -160,50 +187,44 @@ abstract class DatabaseTable implements IDatabaseTable
 	}
 	
 	/**
-	 * Determines whether it should add loaded entities to the session.
-	 * 
-	 * @param array $fields
-	 * @param array $fieldsToIgnore
-	 * @param bool $inclOneToMany
-	 * @return bool
-	 */
-	protected static function shouldAddToSession($fields,$fieldsToIgnore,$inclOneToMany)
-	{
-		return $fields===null && $fieldsToIgnore===null && $inclOneToMany===true;
-	}
-	
-	/**
 	 * @param string $entityClass
 	 * @param array $fieldValues
 	 * @param array $manyToOneFieldsToLoad
 	 * @param array $oneToManyListsToLoad
-	 * @param bool $addToSession
+	 * @param bool $inclManyToOne
+	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @param bool $isSubEntity
 	 * @param string $parentClass
 	 * @param string $parentFieldName
 	 * @param array $fieldsOfParent
+	 * @param array $fieldsToIgnore
 	 * @return FieldEntity
 	 */
-	protected static function createInstance($entityClass,$fieldValues,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$addToSession,$session,$isSubEntity,$parentClass,$parentFieldName,$fieldsOfParent)
+	protected static function createInstance($entityClass,$fieldValues,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$manyToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session,$isSubEntity,$parentClass,$parentFieldName,$fieldsOfParent,$fieldsToIgnore)
 	{
 		$newEntity=new $entityClass();
 		self::setFieldValues($newEntity, $fieldValues,$isSubEntity, $entityClass);
 		
-		$manyToOneNotEmpty=!empty($manyToOneFieldsToLoad);
-		$oneToManyNotEmpty=!empty($oneToManyListsToLoad);
-		
 		$ID=$isSubEntity?intval($newEntity->$parentFieldName):$newEntity->ID;
 		
-		if($addToSession)
-			$session->add($newEntity, $entityClass,$ID);
+		if(!$session->add($newEntity,$entityClass,$ID)){
+			return $session->lookUp($entityClass, $ID);
+		}
 		
-		if($manyToOneNotEmpty)
-			self::loadManyToOneFields($newEntity, $manyToOneFieldsToLoad,$session);
-		if($isSubEntity)
-			$newEntity->$parentFieldName=$parentClass::loadByID($ID,$fieldsOfParent);
-		if($oneToManyNotEmpty)
-			self::loadOneToManyLists($entityClass, $newEntity, $oneToManyListsToLoad,$session);
+		if(!empty($manyToOneFieldsToLoad)){
+			self::loadManyToOneFields($newEntity, $manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
+		}
+		if($isSubEntity){
+			$newEntity->$parentFieldName=$parentClass::loadByIDInternal($ID,$fieldsOfParent,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
+		}
+		if(!empty($oneToManyListsToLoad)){
+			self::loadOneToManyLists($entityClass, $newEntity, $oneToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
+		}
+		if(!empty($manyToManyListsToLoad)){
+			self::loadManyToManyLists($entityClass, $newEntity, $manyToManyListsToLoad,$inclManyToOne, $inclOneToMany, $inclManyToMany, $session);
+		}
 		
 		return $newEntity;
 	}
@@ -211,9 +232,12 @@ abstract class DatabaseTable implements IDatabaseTable
 	/**
 	 * @param FieldEntity $entity
 	 * @param array $manyToOneFieldsToLoad
+	 * @param bool $inclManyToOne
+	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 */
-	protected static function loadManyToOneFields($entity,$manyToOneFieldsToLoad,$session)
+	protected static function loadManyToOneFields($entity,$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
 	{
 		foreach($manyToOneFieldsToLoad as $manyToOneField){
 			$manyToOneFieldName=$manyToOneField["Field"];
@@ -228,7 +252,7 @@ abstract class DatabaseTable implements IDatabaseTable
 			if($lookUpResult!==false){
 				$manyToOneEntity=$lookUpResult;
 			}else{
-				$manyToOneEntity=$manyToOneClass::loadByIDInternal($foreignKey,null,null,true,$session);
+				$manyToOneEntity=$manyToOneClass::loadByIDInternal($foreignKey,null,null,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 			}
 			
 			$entity->$manyToOneFieldName=$manyToOneEntity;
@@ -239,9 +263,12 @@ abstract class DatabaseTable implements IDatabaseTable
 	 * @param string $entityClass
 	 * @param FieldEntity $entity
 	 * @param array $oneToManyLists
+	 * @param bool $inclManyToOne
+	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 */
-	protected static function loadOneToManyLists($entityClass,$entity,$oneToManyLists,$session)
+	protected static function loadOneToManyLists($entityClass,$entity,$oneToManyLists,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
 	{
 		$ID=$entity->getID();
 		
@@ -254,18 +281,60 @@ abstract class DatabaseTable implements IDatabaseTable
 			$identifier=$oneToManyList["Identifier"];
 			
 			// first, let's try to look it up in the Session
-			$lookUpResult=$session->lookUpByOneToMany($oneToManyClass, $identifier, $ID);
+			$lookUpResult=&$session->lookUpOneToManyList($entityClass, $oneToManyFieldName, $ID);
 			if($lookUpResult!==false){
-				$list=$lookUpResult;
+				$list=&$lookUpResult;
 			}else{
+				$list=&$session->reserveOneToManyList($entityClass, $oneToManyFieldName, $ID);
 				$criteria=new Criteria($oneToManyClass);
 				$criteria->add(Expression::equal($oneToManyClass, $identifier, $entityDTO));
-				$list=$oneToManyClass::loadListByCriteriaInternal($criteria,null,null,true,$session);
-				foreach($list as $item)
-					$item->$identifier=$entity;
+				$loadedEntities=$oneToManyClass::loadListByCriteriaInternal($criteria,null,null,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
+				foreach($loadedEntities as $loadedEntity){
+					$loadedEntity->$identifier=$entity;
+					$list[]=$loadedEntity;
+				}
 			}
 			
-			$entity->$oneToManyFieldName=$list;
+			$entity->$oneToManyFieldName=&$list;
+		}
+	}
+	
+	/**
+	 * @param string $entityClass
+	 * @param FieldEntity $entity
+	 * @param array $manyToManyLists
+	 * @param bool $inclManyToOne
+	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
+	 * @param Session $session
+	 */
+	protected static function loadManyToManyLists($entityClass,$entity,$manyToManyLists,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
+	{
+		$ID=$entity->getID();
+		
+		/* @var $entityDTO FieldEntity */
+		$entityDTO=new $entityClass();
+		$entityDTO->setID($ID);
+		foreach($manyToManyLists as $manyToManyList){
+			$manyToManyFieldName=$manyToManyList["Field"];
+			
+			// first, let's try to look it up in the Session
+			$lookUpResult=&$session->lookUpManyToManyList($entityClass, $manyToManyFieldName, $ID);
+			if($lookUpResult!==false){
+				$list=&$lookUpResult;
+			}else{
+				$list=&$session->reserveManyToManyList($entityClass, $manyToManyFieldName, $ID);
+				
+				$manyToManyClass=$manyToManyList["Class"];
+				$manyToManySide=$manyToManyList["Side"];
+				
+				$loadedEntities=$manyToManyClass::loadListForSideInternal($manyToManySide,$ID,null,null,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
+				foreach($loadedEntities as $loadedEntity){
+					$list[]=$loadedEntity;
+				}
+			}
+			
+			$entity->$manyToManyFieldName=&$list;
 		}
 	}
 	
@@ -302,10 +371,11 @@ abstract class DatabaseTable implements IDatabaseTable
 					$entity->$fieldName=PropertyTypeCreator::create($fieldValue, $propertyType);
 					break;
 				case FieldTypeEnum::MANY_TO_ONE:
-				case FieldTypeEnum::ONE_TO_MANY:
-				case FieldTypeEnum::MANY_TO_MANY:
 					$entity->$fieldName=$fieldValue;
 					break;
+				case FieldTypeEnum::ONE_TO_MANY:
+				case FieldTypeEnum::MANY_TO_MANY:
+					throw new Exception("WTF? This is a bug, please report it.");
 				default:
 					throw new Exception("The field type '$fieldType' is not supported.");
 			}

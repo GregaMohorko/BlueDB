@@ -19,6 +19,9 @@ class BlueDBProperties
 	const FORMAT_DATE="format_date";
 	const FORMAT_TIME="format_time";
 	const FORMAT_DATETIME="format_datetime";
+	const INCLUDE_MANYTOONE="includeManyToOne";
+	const INCLUDE_ONETOMANY="includeOneToMany";
+	const INCLUDE_MANYTOMANY="includeManyToMany";
 	
 	/**
 	 * @var BlueDBProperties
@@ -66,6 +69,19 @@ class BlueDBProperties
 	public $Format_DateTime="Y-m-d H:i:s";
 	
 	/**
+	 * @var bool
+	 */
+	public $includeManyToOne=true;
+	/**
+	 * @var bool
+	 */
+	public $includeOneToMany=true;
+	/**
+	 * @var bool
+	 */
+	public $includeManyToMany=true;
+	
+	/**
 	 * @param array $config
 	 */
 	private function __construct($config)
@@ -87,6 +103,13 @@ class BlueDBProperties
 			$this->Format_Time=$config[self::FORMAT_TIME];
 		if(array_key_exists(self::FORMAT_DATETIME, $config))
 			$this->Format_DateTime=$config[self::FORMAT_DATETIME];
+		
+		if(array_key_exists(self::INCLUDE_MANYTOONE, $config))
+			$this->includeManyToOne=boolval($config[self::INCLUDE_MANYTOONE]);
+		if(array_key_exists(self::INCLUDE_ONETOMANY, $config))
+			$this->includeOneToMany=boolval($config[self::INCLUDE_ONETOMANY]);
+		if(array_key_exists(self::INCLUDE_MANYTOMANY, $config))
+			$this->includeManyToMany=boolval($config[self::INCLUDE_MANYTOMANY]);
 	}
 	
 	private function __clone() { }

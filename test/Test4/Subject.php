@@ -26,4 +26,12 @@ class Subject extends StrongEntity
 	const NameFieldType=FieldTypeEnum::PROPERTY;
 	const NameColumn=self::NameField;
 	const NamePropertyType=PropertyTypeEnum::TEXT;
+	/**
+	 * @var array
+	 */
+	public $Students;
+	const StudentsField="Students";
+	const StudentsFieldType=FieldTypeEnum::MANY_TO_MANY;
+	const StudentsClass=Student_Subject::class;
+	const StudentsSide=Student_Subject::SubjectsSide;
 }

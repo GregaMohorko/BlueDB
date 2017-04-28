@@ -40,9 +40,10 @@ interface IAssociativeEntity extends IDatabaseTable
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	static function loadListForSide($originSide,$ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
+	static function loadListForSide($originSide,$ID,$fields=null,$fieldsToIgnore=null,$inclOneToMany=null,$inclManyToMany=null);
 	
 	/**
 	 * Loads a list of entities by criteria for the provided origin side.
@@ -55,9 +56,10 @@ interface IAssociativeEntity extends IDatabaseTable
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	static function loadListForSideByCriteria($originSide,$ID,$criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=true);
+	static function loadListForSideByCriteria($originSide,$ID,$criteria,$fields=null,$fieldsToIgnore=null,$inclOneToMany=null,$inclManyToMany=null);
 	
 	/**
 	 * Links two objects.

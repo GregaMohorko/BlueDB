@@ -45,14 +45,17 @@ abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEn
 	 * @param int $ID
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclManyToOne [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	public static function loadListForSide($originSide, $ID, $fields=null, $fieldsToIgnore=null, $inclOneToMany=true)
+	public static function loadListForSide($originSide, $ID, $fields=null, $fieldsToIgnore=null, $inclManyToOne=null, $inclOneToMany=null, $inclManyToMany=null)
 	{
+		self::checkConfig($inclManyToOne,$inclOneToMany,$inclManyToMany);
 		$calledClass=get_called_class();
 		$session=new Session();
-		return $calledClass::loadListForSideInternal($originSide,$ID,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+		return $calledClass::loadListForSideInternal($originSide,$ID,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 	}
 	
 	/**
@@ -60,15 +63,17 @@ abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEn
 	 * @param int $ID
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return array
 	 */
-	private static function loadListForSideInternal($originSide,$ID,$fields,$fieldsToIgnore,$inclOneToMany,$session)
+	protected static function loadListForSideInternal($originSide,$ID,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
 	{
 		$calledClass=get_called_class();
 		$criteria=new Criteria($calledClass);
-		return $calledClass::loadListForSideByCriteriaInternal($originSide,$ID,$criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+		return $calledClass::loadListForSideByCriteriaInternal($originSide,$ID,$criteria,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 	}
 
 	/**
@@ -81,14 +86,17 @@ abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEn
 	 * @param Criteria $criteria
 	 * @param array $fields [optional]
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $inclManyToOne [optional]
 	 * @param bool $inclOneToMany [optional]
+	 * @param bool $inclManyToMany [optional]
 	 * @return array
 	 */
-	public static function loadListForSideByCriteria($originSide, $ID, $criteria, $fields=null, $fieldsToIgnore=null, $inclOneToMany=true)
+	public static function loadListForSideByCriteria($originSide, $ID, $criteria, $fields=null, $fieldsToIgnore=null, $inclManyToOne=null, $inclOneToMany=null, $inclManyToMany=null)
 	{
+		self::checkConfig($inclManyToOne,$inclOneToMany,$inclManyToMany);
 		$calledClass=get_called_class();
 		$session=new Session();
-		return $calledClass::loadListForSideByCriteriaInternal($originSide,$ID,$criteria,$fields,$fieldsToIgnore,$inclOneToMany,$session);
+		return $calledClass::loadListForSideByCriteriaInternal($originSide,$ID,$criteria,$fields,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 	}
 	
 	/**
@@ -97,11 +105,13 @@ abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEn
 	 * @param Criteria $criteria
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
+	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
+	 * @param bool $inclManyToMany
 	 * @param Session $session
 	 * @return array
 	 */
-	private static function loadListForSideByCriteriaInternal($originSide, $ID, $criteria, $fields, $fieldsToIgnore, $inclOneToMany,$session)
+	protected static function loadListForSideByCriteriaInternal($originSide, $ID, $criteria, $fields, $fieldsToIgnore, $inclManyToOne, $inclOneToMany, $inclManyToMany, $session)
 	{
 		$calledClass=get_called_class();
 		
@@ -117,8 +127,9 @@ abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEn
 		
 		$manyToOneFieldsToLoad=null;
 		$oneToManyListsToLoad=null;
+		$manyToManyListsToLoad=null;
 		$fieldsOfParent=null;
-		$query=self::prepareSelectQuery($calledClass,$toLoadClass,$joinColumn,$criteria,$fields,$fieldsToIgnore,$manyToOneFieldsToLoad,$inclOneToMany,$oneToManyListsToLoad,false,null,$fieldsOfParent);
+		$query=self::prepareSelectQuery($calledClass,$toLoadClass,$joinColumn,$criteria,$fields,$fieldsToIgnore,$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$oneToManyListsToLoad,$inclManyToMany,$manyToManyListsToLoad,false,null,$fieldsOfParent);
 		
 		$loadedArrays=self::executeSelectQuery($query,$criteria);
 		if(empty($loadedArrays))
@@ -126,9 +137,15 @@ abstract class AssociativeEntity extends DatabaseTable implements IAssociativeEn
 		
 		$loadedEntities=[];
 		
-		$addToSession=self::shouldAddToSession($fields, $fieldsToIgnore, $inclOneToMany);
+		$parentClass=null;
+		$parentFieldName=null;
+		$isSubEntity=is_subclass_of($toLoadClass, SubEntity::class);
+		if($isSubEntity){
+			$parentClass=$toLoadClass::getParentEntityClass();
+			$parentFieldName=$toLoadClass::getParentFieldName();
+		}
 		foreach($loadedArrays as $array){
-			$loadedEntities[]=self::createInstance($toLoadClass,$array,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$addToSession,$session,false,null,null,null);
+			$loadedEntities[]=self::createInstance($toLoadClass,$array,$manyToOneFieldsToLoad,$oneToManyListsToLoad, $manyToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session,$isSubEntity,$parentClass,$parentFieldName,$fieldsOfParent,$fieldsToIgnore);
 		}
 		
 		return $loadedEntities;

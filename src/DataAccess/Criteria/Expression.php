@@ -680,31 +680,26 @@ class Expression
 			foreach($expression->Joins as $joiningEntityClass => $arrayByJoiningEntityClass){
 				if(!isset($mergedJoins[$joiningEntityClass]))
 					$mergedJoins[$joiningEntityClass]=[];
-				$mergedArrayByJoiningEntityClass=$mergedJoins[$joiningEntityClass];
-
+				$mergedArrayByJoiningEntityClass=&$mergedJoins[$joiningEntityClass];
+				
 				foreach($arrayByJoiningEntityClass as $joinType => $arrayByJoinType){
 					if(!isset($mergedArrayByJoiningEntityClass[$joinType]))
 						$mergedArrayByJoiningEntityClass[$joinType]=[];
-					$mergedArrayByJoinType=$mergedArrayByJoiningEntityClass[$joinType];
-
+					$mergedArrayByJoinType=&$mergedArrayByJoiningEntityClass[$joinType];
+					
 					foreach($arrayByJoinType as $joinBasePlace => $arrayByJoinBasePlace){
 						if(!isset($mergedArrayByJoinType[$joinBasePlace]))
 							$mergedArrayByJoinType[$joinBasePlace]=[];
-						$mergedArrayByJoinBasePlace=$mergedArrayByJoinType[$joinBasePlace];
-
+						$mergedArrayByJoinBasePlace=&$mergedArrayByJoinType[$joinBasePlace];
+						
 						foreach($arrayByJoinBasePlace as $joinBaseColumn => $arrayByJoinBaseColumn){
 							if(!isset($mergedArrayByJoinBasePlace[$joinBaseColumn]))
 								$mergedArrayByJoinBasePlace[$joinBaseColumn]=[];
-							$mergedArrayByJoinBaseColumn=$mergedArrayByJoinBasePlace[$joinBaseColumn];
-
+							$mergedArrayByJoinBaseColumn=&$mergedArrayByJoinBasePlace[$joinBaseColumn];
+							
 							foreach($arrayByJoinBaseColumn as $joinColumn => $joinName){
 								if(!isset($mergedArrayByJoinBaseColumn[$joinColumn])){
 									$mergedArrayByJoinBaseColumn[$joinColumn]=$joinName;
-
-									$mergedArrayByJoinBasePlace[$joinBaseColumn]=$mergedArrayByJoinBaseColumn;
-									$mergedArrayByJoinType[$joinBasePlace]=$mergedArrayByJoinBasePlace;
-									$mergedArrayByJoiningEntityClass[$joinType]=$mergedArrayByJoinType;
-									$mergedJoins[$joiningEntityClass]=$mergedArrayByJoiningEntityClass;
 								}
 							}
 						}

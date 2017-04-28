@@ -48,19 +48,19 @@ class Test3 extends Test
 	{
 		// should load all students
 		$students=Student::loadList();
-		assert(count($students)==2,"Count of all students");
+		assert(count($students)===2,"Count of all students");
 		// checks if all data is correct (see Test3.sql)
 		$this->checkLojzi($students[0]);
 		$this->checkTadej($students[1]);
 		
 		// should load all teachers
 		$teachers=Teacher::loadList();
-		assert(count($teachers)==1,"Count of all teachers");
+		assert(count($teachers)===1,"Count of all teachers");
 		$this->checkGrega($teachers[0]);
 		
 		// should load all users (in type User)
 		$allUsers=User::loadList();
-		assert(count($allUsers)==3,"Count of all users");
+		assert(count($allUsers)===3,"Count of all users");
 		assert(get_class($allUsers[0])===User::class,"Users class");
 		assert($allUsers[1]->getID()===2,"Users ID");
 		assert($allUsers[2]->Name==="Grega","Users name");
@@ -69,24 +69,40 @@ class Test3 extends Test
 		
 		// should load all students, but only RegistrationNumber for each
 		$students=Student::loadList([Student::RegistrationNumberField]);
-		assert(count($students)==2,"Count of all students");
+		assert(count($students)===2,"Count of all students");
 		assert($students[0]->RegistrationNumber==="E1066934","Students registration number");
 		assert($students[1]->User->Name===null,"Students name should be null, but is '".$students[1]->User->Name."'.");
 		assert($students[0]->User->Address===null,"Students address");
 		
 		// should load all teachers, but only Address for each
 		$teachers=Teacher::loadList([User::AddressField]);
-		assert(count($teachers)==1,"Count of all teachers");
+		assert(count($teachers)===1,"Count of all teachers");
 		assert($teachers[0]->User->Address!==null,"Teachers address");
 		assert($teachers[0]->User->Address->Street==="Celje","Teachers address street");
 		assert($teachers[0]->User->Name===null,"Teachers name");
 		
 		// should load all students, but only Name for each
 		$students=Student::loadList([User::NameField]);
-		assert(count($students)==2,"Count of all students");
+		assert(count($students)===2,"Count of all students");
 		assert($students[0]->RegistrationNumber===null,"Students registration number");
 		assert($students[1]->User->Name==="Tadej","Students name");
 		assert($students[0]->User->Address===null,"Students address");
+		
+		// should load all students, but without RegistrationNumber
+		$students=Student::loadList(null,[Student::RegistrationNumberField]);
+		assert(count($students)===2,"Count of all students");
+		assert($students[0]->RegistrationNumber===null,"Students registration number");
+		assert($students[1]->User->Name==="Tadej","Students name");
+		assert($students[0]->User->Address!==null,"Students address");
+		assert($students[0]->User->Address->Street==="Ljubljana","Students address street");
+		
+		// should load all students, but without Name
+		$students=Student::loadList(null,[User::NameField]);
+		assert(count($students)===2,"Count of all students");
+		assert($students[0]->RegistrationNumber==="E1066934","Students registration number");
+		assert($students[0]->User->Name===null,"Students name");
+		assert($students[0]->User->Address!==null,"Students address");
+		assert($students[0]->User->Address->Street==="Ljubljana","Students address street");
 	}
 	
 	private function testLoadListByCriteria()

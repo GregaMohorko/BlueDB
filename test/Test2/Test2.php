@@ -64,9 +64,17 @@ class Test2 extends Test
 		assert($ryan->Address!=null,"Ryans address is null");
 		
 		// load all addresses, but without OneToMany fields
-		$addresses=Address::loadList(null,null,false);
+		$addresses=Address::loadList(null,null,null,false);
 		assert(count($addresses)===3,"Addresses count");
 		assert($addresses[1]->Users===null,"Address Users");
+		
+		// load all users, but without OneToMany fields
+		$users=User::loadList(null, null, null, false);
+		assert(count($users)==3,"Count of all users");
+		$ryan=$users[0];
+		assert($ryan->Name==="Ryan","Without OneToMany fields");
+		assert($ryan->BestFriendTo===null,"Without OneToMany fields");
+		assert($ryan->BestFriend->BestFriendTo===null,"Without OneToMany fields");
 	}
 	
 	private function testLoadListByCriteria()

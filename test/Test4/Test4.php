@@ -53,15 +53,19 @@ class Test4 extends Test
 		$subjects=Student_Subject::loadListForSide(Student_Subject::StudentsSide, $leon->ID);
 		assert(count($subjects)===1,"Count of Leons subjects");
 		assert($subjects[0]->Name==="Math","Leons subject");
+		assert($subjects[0]->Students!==null,"Leons subjects");
+		assert(count($subjects[0]->Students)===2,"ManyToMany field");
+		assert($subjects[0]->Students[0]->Name==="Leon","ManyToMany field");
+		assert($subjects[0]->Students[1]->Name==="Tadej","ManyToMany field");
 		
 		// loads all subjects of Matic, but only the Name field
 		/* @var $matic Student */
 		$matic=Student::loadByID(2);
 		$subjects=Student_Subject::loadListForSide(Student_Subject::StudentsSide, $matic->ID,[Subject::NameField]);
 		assert(count($subjects)===2,"Count of Matics subjects");
-		assert($subjects[0]->ID===null,"Matics subject");
 		assert($subjects[0]->Name==="History","Matics subject");
 		assert($subjects[1]->Name==="Geography","Matics subject");
+		assert($subjects[1]->Students===null,"ManyToMany field");
 		
 		// loads all subjects of Tadej, but without Name field
 		/* @var $tadej Student */
@@ -72,6 +76,8 @@ class Test4 extends Test
 		assert($subjects[0]->ID===1,"Tadejs subject");
 		assert($subjects[1]->ID===2,"Tadejs subject");
 		assert($subjects[2]->ID===3,"Tadejs subject");
+		assert($subjects[1]->Students!==null,"ManyToMany field");
+		assert(count($subjects[2]->Students)===2,"ManyToMany field");
 		
 		// loads all students who are studying Math
 		// Maths ID is 1
@@ -79,6 +85,12 @@ class Test4 extends Test
 		assert(count($students)===2,"Count of students studying Math");
 		assert($students[0]->Name==="Leon","Students studying Math");
 		assert($students[1]->Name==="Tadej","Students studying Math");
+		
+		// loads all subjects of Leon, but without ManyToMany fields
+		$subjects=Student_Subject::loadListForSide(Student_Subject::StudentsSide, $leon->ID, null, null, null, null, false);
+		assert(count($subjects)===1,"Count of Leons subjects");
+		assert($subjects[0]->Name==="Math","Leons subject");
+		assert($subjects[0]->Students===null,"Without ManyToMany fields");
 	}
 	
 	private function testLoadListForSideByCriteria()
