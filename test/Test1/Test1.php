@@ -52,12 +52,12 @@ class Test1 extends Test
 		$this->checkAlyx($users[1]);
 		$this->checkBarney($users[2]);
 		
-		// should also load everything inside User table
+		// should also load everything inside User table, but only with ID
 		$users=User::loadList([]);
 		assert(count($users)==3, "Count of all users");
-		$this->checkGordon($users[0]);
-		$this->checkAlyx($users[1]);
-		$this->checkBarney($users[2]);
+		assert($users[0]->ID===1,"Empty fields");
+		assert($users[1]->Username===null);
+		// let's just assume that everything else is OK
 		
 		// should load all 3, but only the username and password for each
 		$users=User::loadList([User::UsernameField,User::PasswordField]);
@@ -126,11 +126,27 @@ class Test1 extends Test
 		assert(count($users)==1, "Count of all users");
 		$this->checkGordon($users[0]);
 		
+		// should load all users whose car count is below 11
+		$criteria=new Criteria(User::class);
+		$criteria->add(Expression::below(User::class, User::CarCountField, 11));
+		$users=User::loadListByCriteria($criteria);
+		assert(count($users)==1, "Count of all users");
+		$this->checkAlyx($users[0]);
+		
 		// should load all users whose birthday is after current date
 		$criteria=new Criteria(User::class);
 		$criteria->add(Expression::afterNow(User::class, User::BirthdayField));
 		$users=User::loadListByCriteria($criteria);
 		assert(count($users)==0, "Count of all users");
+		
+		// should load all users whose birthday is before current date
+		$criteria=new Criteria(User::class);
+		$criteria->add(Expression::beforeNow(User::class, User::BirthdayField));
+		$users=User::loadListByCriteria($criteria);
+		assert(count($users)===3, "Count of all users");
+		$this->checkGordon($users[0]);
+		$this->checkAlyx($users[1]);
+		$this->checkBarney($users[2]);
 		
 		// should load all users whose birthday is between 1980 and 1990
 		$criteria=new Criteria(User::class);

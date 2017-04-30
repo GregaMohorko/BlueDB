@@ -63,7 +63,7 @@ abstract class DatabaseTable implements IDatabaseTable
 		if($isSubEntity)
 			$useFieldsOfParent=true;
 		
-		if(empty($fields)){
+		if($fields===null){
 			$fields=$classToLoad::getFieldList();
 			if($isSubEntity)
 				$useFieldsOfParent=false;
@@ -220,7 +220,7 @@ abstract class DatabaseTable implements IDatabaseTable
 			$newEntity->$parentFieldName=$parentClass::loadByIDInternal($ID,$fieldsOfParent,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 		}
 		if(!empty($oneToManyListsToLoad)){
-			self::loadOneToManyLists($entityClass, $newEntity, $oneToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
+			self::loadOneToManyLists($entityClass, $newEntity, $oneToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$isSubEntity,$session);
 		}
 		if(!empty($manyToManyListsToLoad)){
 			self::loadManyToManyLists($entityClass, $newEntity, $manyToManyListsToLoad,$inclManyToOne, $inclOneToMany, $inclManyToMany, $session);
@@ -247,6 +247,13 @@ abstract class DatabaseTable implements IDatabaseTable
 			if($foreignKey==null)
 				continue;
 			
+			if(is_string($foreignKey)){
+				$foreignKey=intval($foreignKey);
+			} else if(!is_int($foreignKey)){
+				// is an object and has been loaded already (because of references)
+				continue;
+			}
+			
 			// first, let's try to look it up in the Session
 			$lookUpResult=$session->lookUp($manyToOneClass, $foreignKey);
 			if($lookUpResult!==false){
@@ -266,14 +273,19 @@ abstract class DatabaseTable implements IDatabaseTable
 	 * @param bool $inclManyToOne
 	 * @param bool $inclOneToMany
 	 * @param bool $inclManyToMany
+	 * @param bool $isSubEntity
 	 * @param Session $session
 	 */
-	protected static function loadOneToManyLists($entityClass,$entity,$oneToManyLists,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session)
+	protected static function loadOneToManyLists($entityClass,$entity,$oneToManyLists,$inclManyToOne,$inclOneToMany,$inclManyToMany,$isSubEntity,$session)
 	{
 		$ID=$entity->getID();
 		
 		/* @var $entityDTO FieldEntity */
-		$entityDTO=new $entityClass();
+		if($isSubEntity){
+			$entityDTO=$entityClass::createEmpty();
+		}else{
+			$entityDTO=new $entityClass();
+		}
 		$entityDTO->setID($ID);
 		foreach($oneToManyLists as $oneToManyList){
 			$oneToManyFieldName=$oneToManyList["Field"];

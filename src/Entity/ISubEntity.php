@@ -32,4 +32,11 @@ interface ISubEntity extends IFieldEntity
 	 * @return string
 	 */
 	static function getParentFieldName();
+	
+	/**
+	 * Creates an empty instance of this SubEntity, with initialized parents.
+	 * 
+	 * @return SubEntity
+	 */
+	static function createEmpty();
 }

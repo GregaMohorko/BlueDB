@@ -130,16 +130,16 @@ class Test4 extends Test
 	private function testUnlinkMultiple()
 	{
 		// unlink Tadej with all subjects
+		/* @var $tadej Student */
 		$tadej=Student::loadByID(3);
-		$tadejsSubjects=Student_Subject::loadListForSide(Student_Subject::StudentsSide, 3);
-		Student_Subject::unlinkMultipleB($tadej, $tadejsSubjects,true,false);
+		Student_Subject::unlinkMultipleB($tadej, $tadej->Subjects,true,false);
 		$tadejsSubjects=Student_Subject::loadListForSide(Student_Subject::StudentsSide, 3);
 		assert(count($tadejsSubjects)===0,"Unlinking multiple subjects of Tadej");
 		
 		// unlink Geography with all students
+		/* @var $geography Subject */
 		$geography=Subject::loadByID(3);
-		$studentsOfGeography=Student_Subject::loadListForSide(Student_Subject::SubjectsSide, 3);
-		Student_Subject::unlinkMultipleA($geography, $studentsOfGeography,false,true);
+		Student_Subject::unlinkMultipleA($geography, $geography->Students,false,true);
 		$studentsOfGeography=Student_Subject::loadListForSide(Student_Subject::SubjectsSide, 3);
 		assert(count($studentsOfGeography)===0,"Unlinking multiple students of Geography");
 	}
@@ -191,14 +191,14 @@ class Test4 extends Test
 		$criteria=new Criteria(Subject::class);
 		$criteria->add(Expression::isNotIn(Subject::class, Student_Subject::class, Student_Subject::SubjectsSide));
 		$subjects=Subject::loadListByCriteria($criteria);
-		assert(count($subjects)===1,"Expression notIn");
-		assert($subjects[0]->Name==="Geography","Expression notIn");
+		assert(count($subjects)===1,"Expression isNotIn");
+		assert($subjects[0]->Name==="Geography","Expression isNotIn");
 		
 		// load all students that have no subjects
 		$criteria=new Criteria(Student::class);
 		$criteria->add(Expression::isNotIn(Student::class, Student_Subject::class, Student_Subject::StudentsSide));
 		$students=Student::loadListByCriteria($criteria);
-		assert(empty($students),"Expression notIn");
+		assert(empty($students),"Expression isNotIn");
 		
 		// unlink Leon with his only subject (Math)
 		$leon=Student::loadByID(1);
@@ -207,7 +207,7 @@ class Test4 extends Test
 		
 		// now load all students that have no subjects again
 		$students=Student::loadListByCriteria($criteria);
-		assert(count($students)===1,"Expression notIn");
-		assert($students[0]->Name==="Leon","Expression notIn");
+		assert(count($students)===1,"Expression isNotIn");
+		assert($students[0]->Name==="Leon","Expression isNotIn");
 	}
 }

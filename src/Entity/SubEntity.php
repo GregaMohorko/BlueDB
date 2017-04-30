@@ -22,6 +22,12 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 	public function getID()
 	{
 		$baseStrongEntity=$this->getBaseStrongEntity();
+		if($baseStrongEntity===null){
+			echo "<pre>";
+			var_dump($this);
+			echo "</pre>";
+			throw new \Exception("WTF");
+		}
 		return $baseStrongEntity->ID;
 	}
 	
@@ -31,6 +37,9 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 	public function setID($ID)
 	{
 		$baseStrongEntity=$this->getBaseStrongEntity();
+		if($baseStrongEntity===null){
+			return;
+		}
 		$baseStrongEntity->ID=$ID;
 	}
 	
@@ -62,6 +71,57 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		self::$baseStrongEntityClasses[$childClassName]=$current;
 		
 		return $current;
+	}
+	
+	/**
+	 * @return StrongEntity
+	 */
+	private function getBaseStrongEntity()
+	{
+		$childClassName=get_called_class();
+		
+		$currentClass=$childClassName::getParentEntityClass();
+		$parentFieldName=$childClassName::getParentFieldName();
+		$currentValue=$this->$parentFieldName;
+		
+		while(true){
+			if(is_subclass_of($currentClass, StrongEntity::class))
+				return $currentValue;
+			
+			// is still a SubEntity, go further up
+			$parentFieldName=$currentClass::getParentFieldName();
+			$currentValue=$currentValue->$parentFieldName;
+			$currentClass=$currentClass::getParentEntityClass;
+		}
+	}
+	
+	/**
+	 * Creates an empty instance of this SubEntity, with initialized parents.
+	 * 
+	 * @return SubEntity
+	 */
+	public static function createEmpty()
+	{
+		$calledClass=get_called_class();
+		
+		$entity=new $calledClass();
+		$currentClass=$calledClass::getParentEntityClass();
+		$parentFieldName=$calledClass::getParentFieldName();
+		$currentValue=new $currentClass();
+		$entity->$parentFieldName=$currentValue;
+		
+		while(true){
+			if(is_subclass_of($currentClass, StrongEntity::class))
+				break;
+			
+			$currentClass=$currentClass::getParentEntityClass();
+			$parentFieldName=$currentClass::getParentFieldName();
+			$newValue=new $currentClass();
+			$currentValue->$parentFieldName=$newValue;
+			$currentValue=$newValue;
+		}
+		
+		return $entity;
 	}
 	
 	/**
@@ -229,27 +289,5 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$parentFieldName=$childClassName::getParentFieldName();
 		$parentEntity=$subEntity->$parentFieldName;
 		$parentClass::deleteInternal($parentEntity,false,$commit,$session);
-	}
-	
-	/**
-	 * @return StrongEntity
-	 */
-	private function getBaseStrongEntity()
-	{
-		$childClassName=get_called_class();
-		
-		$currentClass=$childClassName::getParentEntityClass();
-		$parentFieldName=$childClassName::getParentFieldName();
-		$currentValue=$this->$parentFieldName;
-		
-		while(true){
-			if(is_subclass_of($currentClass, StrongEntity::class))
-				return $currentValue;
-			
-			// is still a SubEntity, go further up
-			$parentFieldName=$currentClass::getParentFieldName();
-			$currentValue=$currentValue->$parentFieldName;
-			$currentClass=$currentClass::getParentEntityClass;
-		}
 	}
 }

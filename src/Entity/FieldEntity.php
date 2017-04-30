@@ -652,11 +652,17 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$field=$pointingBackArray["Field"];
 			$criteria=new Criteria($class);
 			$criteria->add(Expression::equal($class, $field, $dto));
-			$objects=$class::loadListByCriteriaInternal($criteria,[StrongEntity::IDField],null,false,false,false,$session);
+			$objects=$class::loadListByCriteriaInternal($criteria,[],null,false,false,false,$session);
 			if(empty($objects))
 				// nobody is pointing to the entity being deleted
 				continue;
 
+			if($fieldEntity->$baseField===null){
+				// has to load it
+				$fieldEntityWithBaseField=$childClassName::loadByIDInternal($ID,[$baseField],null,true,false,false,$session);
+				$fieldEntity->$baseField=$fieldEntityWithBaseField->$baseField;
+			}
+			
 			$neededID=$fieldEntity->$baseField->getID();
 			// find the object that the entity being deleted is pointing to
 			$foundObject=false;

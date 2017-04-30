@@ -10,9 +10,9 @@
 
 namespace Test4;
 
-use BlueDB\Entity\AssociativeEntity;
+use BlueDB\Entity\AssociativeTable;
 
-abstract class Student_Subject extends AssociativeEntity
+abstract class Student_Subject extends AssociativeTable
 {
 	public static function getTableName() { return "Student_Subject"; }
 	public static function getSideA() { return self::StudentsSide; }

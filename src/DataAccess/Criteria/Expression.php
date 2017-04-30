@@ -84,7 +84,7 @@ class Expression
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
-	 * @param mixed $value Inclusive bottom value.
+	 * @param mixed $value Exclusive bottom value.
 	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
@@ -97,11 +97,12 @@ class Expression
 	 * @param string $criteriaClass
 	 * @param string $field
 	 * @param mixed $value
+	 * @param string $operator Either '>' or '<'.
 	 * @param bool $hasToPrepareStatement
 	 * @param string $parentClass
 	 * @return Expression
 	 */
-	private static function abovePrivate($criteriaClass,$field,$value,$hasToPrepareStatement,$parentClass)
+	private static function aboveOrBelow($criteriaClass,$field,$value,$operator,$hasToPrepareStatement,$parentClass)
 	{
 		if($parentClass===null)
 			$parentClass=$criteriaClass;
@@ -138,7 +139,7 @@ class Expression
 			$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		}
 		
-		$term=$termName.".".$field." > ";
+		$term=$termName.".".$field." $operator ";
 		
 		if($hasToPrepareStatement){
 			$term.="?";
@@ -157,6 +158,33 @@ class Expression
 	}
 	
 	/**
+	 * @param string $criteriaClass
+	 * @param string $field
+	 * @param mixed $value
+	 * @param bool $hasToPrepareStatement
+	 * @param string $parentClass
+	 * @return Expression
+	 */
+	private static function abovePrivate($criteriaClass,$field,$value,$hasToPrepareStatement,$parentClass)
+	{
+		return self::aboveOrBelow($criteriaClass, $field, $value, '>', $hasToPrepareStatement, $parentClass);
+	}
+	
+	/**
+	 * Selects only those entries whose DateTime field value is after the provided DateTime value.
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
+	 * @param type $dateTimeValue Exclusive value.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
+	 * @return Expression
+	 */
+	public static function after($criteriaClass,$field,$dateTimeValue,$parentClass=null)
+	{
+		return self::abovePrivate($criteriaClass, $field, $dateTimeValue, true,$parentClass);
+	}
+	
+	/**
 	 * Selects only those entries whose DateTime field value is after the current date & time.
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
@@ -171,17 +199,58 @@ class Expression
 	}
 	
 	/**
-	 * Selects only those entries whose DateTime field value is after the provided DateTime value.
+	 * Selects only those entries whose DateTime field value is before the current date & time.
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
-	 * @param type $dateTimeValue
 	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
 	 * @return Expression
 	 */
-	public static function after($criteriaClass,$field,$dateTimeValue,$parentClass=null)
+	public static function beforeNow($criteriaClass,$field,$parentClass=null)
 	{
-		return self::abovePrivate($criteriaClass, $field, $dateTimeValue, true,$parentClass);
+		$dateTimeValue=new DateTime();
+		return self::belowPrivate($criteriaClass,$field,$dateTimeValue,false,$parentClass);
+	}
+	
+	/**
+	 * Selects only those entries whose DateTime field value is after the specified DateTime value.
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
+	 * @param type $dateTimeValue Exclusive value.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
+	 * @return Expression
+	 */
+	public static function before($criteriaClass,$field,$dateTimeValue,$parentClass=null)
+	{
+		return self::belowPrivate($criteriaClass,$field,$dateTimeValue,true,$parentClass);
+	}
+	
+	/**
+	 * Selects only those entries whose field value is below the provided one. Can be used for int, float, date, time and datetime.
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
+	 * @param mixed $value Exclusive top value.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
+	 * @return Expression
+	 */
+	public static function below($criteriaClass,$field,$value,$parentClass=null)
+	{
+		return self::belowPrivate($criteriaClass,$field,$value,true,$parentClass);
+	}
+	
+	/**
+	 * @param string $criteriaClass
+	 * @param string $field
+	 * @param mixed $value
+	 * @param bool $hasToPrepareStatement
+	 * @param string $parentClass
+	 * @return Expression
+	 */
+	private static function belowPrivate($criteriaClass,$field,$value,$hasToPrepareStatement,$parentClass)
+	{
+		return self::aboveOrBelow($criteriaClass, $field, $value, '<', $hasToPrepareStatement, $parentClass);
 	}
 	
 	/**

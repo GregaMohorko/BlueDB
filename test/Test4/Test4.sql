@@ -1,5 +1,5 @@
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS Student_Subject,Subject,Student,Teacher,Car,User,Address;
+DROP TABLE IF EXISTS StudentAttendance,Student_Subject,Subject,Student,Teacher,Car,User,Address;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Create Student table

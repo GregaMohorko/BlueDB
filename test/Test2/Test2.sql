@@ -1,5 +1,5 @@
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS Car,User,Address;
+DROP TABLE IF EXISTS UserType,Car,User,Address;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Create Address table

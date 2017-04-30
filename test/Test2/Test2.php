@@ -249,6 +249,9 @@ class Test2 extends Test
 		
 		// Bruce can now be deleted, even though that Bruce and car Tank are pointing to each other. BlueDB takes care of that :)
 		// but note that this works because the constraint in Car is set to cascade on delete
+		$bruceID=$bruce->ID;
+		$bruce=new User();
+		$bruce->ID=$bruceID;
 		User::delete($bruce,false,true);
 		$bruce=User::loadByID(2);
 		assert($bruce===null,"Deleting john");
