@@ -3,7 +3,9 @@
 /* 
  * BlueDB.php
  * 
- * Includes all files needed by this library.
+ * Bootstrap file for BlueDB library.
+ * 
+ * Version 1.0.0.0
  * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
@@ -15,9 +17,11 @@ $config=parse_ini_file("config.ini");
 if(!$config)
 	throw new Exception("Could not parse config.ini configuration file.");
 
+// initialize
 require_once 'Configuration/BlueDBProperties.php';
 \BlueDB\Configuration\BlueDBProperties::init($config);
 
+// include all files
 require_once 'DataAccess/Criteria/Expression.php';
 require_once 'DataAccess/Criteria/Criteria.php';
 require_once 'DataAccess/JoinType.php';
