@@ -10,6 +10,8 @@
 
 namespace BlueDB\Configuration;
 
+use Exception;
+
 class BlueDBProperties
 {
 	const HOST="host";
@@ -36,6 +38,14 @@ class BlueDBProperties
 		if(self::$instance===null)
 			throw new Exception("The BlueDBProperties instance was not initialized.");
 		return self::$instance;
+	}
+	
+	/**
+	 * @param array $config
+	 */
+	public static function init($config)
+	{
+		self::$instance=new BlueDBProperties($config);
 	}
 	
 	/**
@@ -114,12 +124,4 @@ class BlueDBProperties
 	
 	private function __clone() { }
 	private function __wakeup() { }
-	
-	/**
-	 * @param array $config
-	 */
-	public static function init($config)
-	{
-		self::$instance=new BlueDBProperties($config);
-	}
 }

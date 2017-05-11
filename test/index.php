@@ -16,7 +16,7 @@ $include=filter_input(INPUT_GET, "include");
 if($include===null){
 	$actual_link = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[PHP_SELF]";
 	header("Location: ".$actual_link."?include=all");
-	die();
+	exit();
 }
 
 include 'Test.php';
