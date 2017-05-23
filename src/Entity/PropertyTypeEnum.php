@@ -75,13 +75,13 @@ abstract class PropertyTypeEnum
 			case PropertyTypeEnum::COLOR:
 				return $propertyValue;
 			case PropertyTypeEnum::DATE:
-				$properties=BlueDBProperties::Instance();
+				$properties=BlueDBProperties::instance();
 				return $propertyValue->format($properties->Format_Date);
 			case PropertyTypeEnum::TIME:
-				$properties=BlueDBProperties::Instance();
+				$properties=BlueDBProperties::instance();
 				return $propertyValue->format($properties->Format_Time);
 			case PropertyTypeEnum::DATETIME:
-				$properties=BlueDBProperties::Instance();
+				$properties=BlueDBProperties::instance();
 				return $propertyValue->format($properties->Format_DateTime);
 			default:
 				throw new Exception("PropertyType '".$propertyType."' is not supported.");

@@ -19,11 +19,12 @@ use BlueDB\Configuration\BlueDBProperties;
  * 
  * For example, creates an actual DateTime object from "2017-03-15" value.
  */
-abstract class PropertyTypeCreator
+abstract class PropertyCreator
 {
 	/**
 	 * @param string $value
 	 * @param PropertyTypeEnum $type
+	 * return mixed
 	 */
 	public static function create($value,$type)
 	{
@@ -111,7 +112,7 @@ abstract class PropertyTypeCreator
 		if($value===null)
 			return null;
 		
-		$properties=BlueDBProperties::Instance();
+		$properties=BlueDBProperties::instance();
 		
 		/*@var $dateValue DateTime*/
 		$dateValue=DateTime::createFromFormat($properties->Format_Date, $value);
@@ -132,7 +133,7 @@ abstract class PropertyTypeCreator
 		if($value===null)
 			return null;
 		
-		$properties=BlueDBProperties::Instance();
+		$properties=BlueDBProperties::instance();
 		
 		/* @var $timeValue DateTime */
 		$timeValue=DateTime::createFromFormat($properties->Format_Time,$value);
@@ -153,7 +154,7 @@ abstract class PropertyTypeCreator
 		if($value===null)
 			return null;
 		
-		$properties=BlueDBProperties::Instance();
+		$properties=BlueDBProperties::instance();
 		
 		$datetimeValue=DateTime::createFromFormat($properties->Format_DateTime,$value);
 		if(!$datetimeValue)

@@ -18,6 +18,7 @@ class BlueDBProperties
 	const DB="db";
 	const USER="user";
 	const PASS="pass";
+	const NAMESPACE_ENTITIES="namespace_entities";
 	const FORMAT_DATE="format_date";
 	const FORMAT_TIME="format_time";
 	const FORMAT_DATETIME="format_datetime";
@@ -33,7 +34,7 @@ class BlueDBProperties
 	/**
 	 * @return BlueDBProperties
 	 */
-	public static function Instance()
+	public static function instance()
 	{
 		if(self::$instance===null)
 			throw new Exception("The BlueDBProperties instance was not initialized.");
@@ -64,6 +65,11 @@ class BlueDBProperties
 	 * @var string
 	 */
 	public $MySQL_password;
+	
+	/**
+	 * @var string
+	 */
+	public $Namespace_Entities="";
 	
 	/**
 	 * @var string
@@ -107,6 +113,8 @@ class BlueDBProperties
 		$this->MySQL_username=$config[self::USER];
 		$this->MySQL_password=$config[self::PASS];
 		
+		if(array_key_exists(self::NAMESPACE_ENTITIES, $config))
+			$this->Namespace_Entities=$config[self::NAMESPACE_ENTITIES];
 		if(array_key_exists(self::FORMAT_DATE, $config))
 			$this->Format_Date=$config[self::FORMAT_DATE];
 		if(array_key_exists(self::FORMAT_TIME, $config))

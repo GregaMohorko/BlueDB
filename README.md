@@ -2,7 +2,7 @@
 
 A PHP MySQL library with Database First model that lets you create Entities with base properties and complex relationships (*One-To-Many*, *Many-To-One*, *Many-To-Many*, *Table Inheritance*, *Associative tables*), supports queries with expressions and is simple to use.
 
-Latest release: [v1.0](https://github.com/GregaMohorko/bluedb/releases/latest)
+Latest release: [v1.1](https://github.com/GregaMohorko/bluedb/releases/latest)
 
 ## Documentation & Tutorials
 
@@ -30,6 +30,12 @@ Simple, we use the `Criteria` class:
 $criteria = new Criteria(User::class);
 $criteria->add(Expression::startsWith(User::class, User::UsernameField, "Ja"));
 $results = User::loadListByCriteria($criteria);
+```
+
+Encoding/decoding entities to/from JSON? No problem!
+```PHP
+$json = JSON::encode($entity);
+$entity = JSON::decode($json);
 ```
 
 Creating a new entry:

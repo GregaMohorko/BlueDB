@@ -23,6 +23,71 @@ interface IFieldEntity extends IDatabaseTable
 	function setID($ID);
 	
 	/**
+	 * Converts this field entity into an array that can be encoded to JSON.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::toArray().
+	 * 
+	 * @param array $fieldsToIgnore [optional]
+	 * @return array
+	 */
+	function toArray($fieldsToIgnore=null);
+	
+	/**
+	 * Encodes this field entity into a JSON string.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::encode().
+	 * 
+	 * @param array $fieldsToIgnore [optional]
+	 * @return string A JSON encoded string.
+	 * @throws Exception
+	 */
+	function toJson($fieldsToIgnore=null);
+	
+	/**
+	 * Converts provided field entities into an array that can be encoded to JSON.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::toArray().
+	 * 
+	 * @param array $entities Field entities to be converted.
+	 * @param array $fieldsToIgnore [optional]
+	 * @return array
+	 */
+	static function toArrayList($entities,$fieldsToIgnore=null);
+	
+	/**
+	 * Encodes provided field entities to a JSON string.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::encode().
+	 * 
+	 * @param array $entities Field entities to be encoded.
+	 * @param array $fieldsToIgnore [optional]
+	 * @return string A JSON encoded string.
+	 * @throws Exception
+	 */
+	static function toJsonList($entities,$fieldsToIgnore=null);
+	
+	/**
+	 * Decodes provided array into entities.
+	 * 
+	 * Note that the array must be in a correct format.
+	 * 
+	 * @param array $array
+	 * @return array|FieldEntity A single or an array of entities.
+	 */
+	static function fromArray($array);
+	
+	/**
+	 * Decodes provided JSON string.
+	 * 
+	 * Note that the JSON must be in a correct format.
+	 * 
+	 * @param string $json A JSON encoded string.
+	 * @return array|FieldEntity A single or an array of entities.
+	 * @throws Exception
+	 */
+	static function fromJson($json);
+	
+	/**
 	 * @return string
 	 */
 	static function getIDColumn();

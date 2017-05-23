@@ -15,6 +15,9 @@ require_once 'Car.php';
 use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
+use BlueDB\Configuration\BlueDBProperties;
+use BlueDB\IO\JSON;
+use BlueDB\Utility\EntityUtility;
 use Test2\User;
 use Test2\Address;
 use Test2\Car;
@@ -28,6 +31,10 @@ class Test2 extends Test
 {
 	public function run()
 	{
+		// set the namespace for entities (this can also be done in the config.ini file)
+		BlueDBProperties::instance()->Namespace_Entities="Test2";
+		
+		// run the .sql script
 		$sqlScript=file_get_contents("Test2/Test2.sql");
 		if($sqlScript===false){
 			echo "<b>Error:</b> Failed to read contents of Test2.sql.";
@@ -39,6 +46,7 @@ class Test2 extends Test
 		$this->testLoadListByCriteria();
 		$this->testLoadSingle();
 		$this->testExists();
+		$this->testJson();
 		$this->testUpdate();
 		$this->testSave();
 		$this->testDelete();
@@ -159,6 +167,30 @@ class Test2 extends Test
 		$celje->Street="Celje";
 		$criteria->add(Expression::equal(User::class, User::AddressField, $celje));
 		assert(User::existsByCriteria($criteria)===false,"Exists user with address Celje");
+	}
+	
+	private function testJson()
+	{
+		$ryan=User::loadByID(1);
+		$bruce=User::loadByID(2);
+		$john=User::loadByID(3);
+		
+		// encode a single entity to JSON and then decode
+		$json=JSON::encode($ryan);
+		$ryanDecoded=JSON::decode($json);
+		assert(EntityUtility::areEqual($ryan, $ryanDecoded),"JSON encode decode");
+		
+		// clone?
+		$bruceClone=clone $bruce;
+		assert(EntityUtility::areEqual($bruce, $bruceClone),"JSON encode decode clone");
+		
+		// encode and decode a list of entities
+		$list=[$ryan,$bruce,$john];
+		$json=JSON::encode($list);
+		$list=JSON::decode($json);
+		assert(EntityUtility::areEqual($ryan, $list[0]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($bruce, $list[1]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($john, $list[2]),"JSON encode decode list");
 	}
 	
 	private function testUpdate()

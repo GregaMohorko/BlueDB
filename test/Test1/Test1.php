@@ -11,9 +11,12 @@
 require_once 'User.php';
 require_once 'UserType.php';
 
+use BlueDB\Configuration\BlueDBProperties;
 use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
+use BlueDB\IO\JSON;
+use BlueDB\Utility\EntityUtility;
 use Test1\User;
 use Test1\UserType;
 
@@ -26,6 +29,10 @@ class Test1 extends Test
 {
 	public function run()
 	{
+		// set the namespace for entities (this can also be done in the config.ini file)
+		BlueDBProperties::instance()->Namespace_Entities="Test1";
+		
+		// run the .sql script
 		$sqlScript=file_get_contents("Test1/Test1.sql");
 		if($sqlScript===false){
 			echo "<b>Error:</b> Failed to read contents of Test1.sql.";
@@ -37,6 +44,7 @@ class Test1 extends Test
 		$this->testLoadListByCriteria();
 		$this->testLoadSingle();
 		$this->testExists();
+		$this->testJson();
 		$this->testUpdate();
 		$this->testSave();
 		$this->testDelete();
@@ -261,6 +269,34 @@ class Test1 extends Test
 		$criteria=new Criteria(User::class);
 		$criteria->add(Expression::endsWith(User::class, User::UsernameField, "do"));
 		assert(User::existsByCriteria($criteria)===false,"Exists user whose username ends with 'do'");
+	}
+	
+	private function testJson()
+	{
+		$gordon=User::loadByID(1);
+		$alyx=User::loadByID(2);
+		$barney=User::loadByID(3);
+		
+		// encode a single entity to JSON and then decode
+		$json=JSON::encode($gordon);
+		$gordonDecoded=JSON::decode($json);
+		assert(!EntityUtility::areEqual($gordon, $alyx),"Comparing entities");
+		assert(EntityUtility::areEqual($gordon, $gordonDecoded),"JSON encode decode");
+		
+		// clone?
+		/* @var $alyxClone User */
+		$alyxClone=clone $alyx;
+		assert(EntityUtility::areEqual($alyx, $alyxClone),"JSON encode decode clone");
+		$alyxClone->IsOkay=false;
+		assert(!EntityUtility::areEqual($alyx, $alyxClone),"JSON encode decode clone");
+		
+		// encode and decode a list of entities
+		$list=[$gordon,$alyx,$barney];
+		$json=JSON::encode($list);
+		$list=JSON::decode($json);
+		assert(EntityUtility::areEqual($gordon, $list[0]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($alyx, $list[1]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($barney, $list[2]),"JSON encode decode list");
 	}
 	
 	private function testUpdate()

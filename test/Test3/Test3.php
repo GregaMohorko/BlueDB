@@ -16,6 +16,9 @@ require_once 'Teacher.php';
 use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
+use BlueDB\Configuration\BlueDBProperties;
+use BlueDB\IO\JSON;
+use BlueDB\Utility\EntityUtility;
 use Test3\User;
 use Test3\Student;
 use Test3\Teacher;
@@ -28,6 +31,10 @@ class Test3 extends Test
 {
 	public function run()
 	{
+		// set the namespace for entities (this can also be done in the config.ini file)
+		BlueDBProperties::instance()->Namespace_Entities="Test3";
+		
+		// run the .sql script
 		$sqlScript=file_get_contents("Test3/Test3.sql");
 		if($sqlScript===false){
 			echo "<b>Error:</b> Failed to read contents of Test3.sql.";
@@ -39,6 +46,7 @@ class Test3 extends Test
 		$this->testLoadListByCriteria();
 		$this->testLoadSingle();
 		$this->testExists();
+		$this->testJson();
 		$this->testUpdate();
 		$this->testSave();
 		$this->testDelete();
@@ -168,6 +176,30 @@ class Test3 extends Test
 		$criteria=new Criteria(Teacher::class);
 		$criteria->add(Expression::equal(Teacher::class, User::AddressField, $ljubljana, User::class));
 		assert(Teacher::existsByCriteria($criteria)===false,"Exists teacher with address Ljubljana");
+	}
+	
+	private function testJson()
+	{
+		$lojzi=Student::loadByID(1);
+		$tadej=Student::loadByID(2);
+		$grega=Teacher::loadByID(3);
+		
+		// encode a single entity to JSON and then decode
+		$json=JSON::encode($lojzi);
+		$lojziDecoded=JSON::decode($json);
+		assert(EntityUtility::areEqual($lojzi, $lojziDecoded),"JSON encode decode");
+		
+		// clone?
+		$tadejClone=clone $tadej;
+		assert(EntityUtility::areEqual($tadej, $tadejClone),"JSON encode decode clone");
+		
+		// encode and decode a list of entities
+		$list=[$lojzi,$tadej,$grega];
+		$json=JSON::encode($list);
+		$list=JSON::decode($json);
+		assert(EntityUtility::areEqual($lojzi, $list[0]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($tadej, $list[1]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($grega, $list[2]),"JSON encode decode list");
 	}
 	
 	private function testUpdate()

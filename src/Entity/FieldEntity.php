@@ -12,6 +12,7 @@ namespace BlueDB\Entity;
 
 use Exception;
 use ReflectionClass;
+use BlueDB\Configuration\BlueDBProperties;
 use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
@@ -23,6 +24,357 @@ use BlueDB\Utility\StringUtility;
 
 abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 {
+	/**
+	 * Used for key references in creating JSON arrays.
+	 * 
+	 * @var int
+	 */
+	private static $KEYCounter=0;
+	
+	/**
+	 * A cache for reflection information of entity classes.
+	 * 
+	 * class -> [Exists(bool),IsSubentity(bool)]
+	 * 
+	 * @var array
+	 */
+	private static $reflectionCache=[];
+	
+	/**
+	 * 
+	 * @param string $class Class of which to get the data.
+	 * @return array class -> [Exists(bool),IsSubentity(bool)]
+	 */
+	private static function getClassData($class)
+	{
+		// check the lookup table
+		if(!isset(self::$reflectionCache[$class])){
+			$reflectionData=[];
+			$reflectionData[]=class_exists($class,false);
+			if($reflectionData[0]){
+				$reflectionData[]=is_subclass_of($class, SubEntity::class);
+			}
+			self::$reflectionCache[$class]=$reflectionData;
+		}
+		return self::$reflectionCache[$class];
+	}
+	
+	/**
+	 * Converts this field entity into an array that can be encoded to JSON.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::toArray().
+	 * 
+	 * @param array $fieldsToIgnore [optional]
+	 * @return array
+	 */
+	public function toArray($fieldsToIgnore=null)
+	{
+		$session=[];
+		return $this->toArrayInternal($fieldsToIgnore, $session);
+	}
+	
+	/**
+	 * Converts provided field entities into an array that can be encoded to JSON.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::toArray().
+	 * 
+	 * @param array $entities Field entities to be converted.
+	 * @param array $fieldsToIgnore [optional]
+	 * @return array
+	 */
+	public static function toArrayList($entities,$fieldsToIgnore=null)
+	{
+		$session=[];
+		
+		$elements=[];
+		foreach($entities as $entity){
+			/* @var $entity FieldEntity */
+			$elements[]=$entity->toArrayInternal($fieldsToIgnore, $session);
+		}
+		
+		return $elements;
+	}
+	
+	/**
+	 * Encodes this field entity into a JSON string.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::encode().
+	 * 
+	 * @param array $fieldsToIgnore [optional]
+	 * @return string A JSON encoded string.
+	 * @throws Exception
+	 */
+	public function toJson($fieldsToIgnore=null)
+	{
+		$json=json_encode($this->toArray($fieldsToIgnore));
+		if($json===false){
+			throw new Exception("Encoding a field entity to JSON was not successful.");
+		}
+		return $json;
+	}
+	
+	/**
+	 * Encodes provided field entities to a JSON string.
+	 * 
+	 * When possible, use \BlueDB\IO\JSON::encode().
+	 * 
+	 * @param array $entities Field entities to be encoded.
+	 * @param array $fieldsToIgnore [optional]
+	 * @return string A JSON encoded string.
+	 * @throws Exception
+	 */
+	public static function toJsonList($entities,$fieldsToIgnore=null)
+	{
+		$json=json_encode(self::toArrayList($entities, $fieldsToIgnore));
+		if($json===false){
+			throw new Exception("Encoding a list of field entities to JSON was not successful.");
+		}
+		return $json;
+	}
+	
+	/**
+	 * Decodes provided array into entities.
+	 * 
+	 * Note that the array must be in a correct format.
+	 * 
+	 * @param array $array
+	 * @return array|FieldEntity A single or an array of entities.
+	 */
+	public static function fromArray($array)
+	{
+		$session=[];
+		if(isset($array["Key"])){
+			// is a single entity
+			return self::fromArraySingle($array,$session);
+		}
+		return self::fromArrayList($array,$session);
+	}
+	
+	/**
+	 * Decodes provided array into a list of entities.
+	 * 
+	 * @param array $array
+	 * @param array $session An array of already decoded objects and their keys.
+	 * @return array
+	 */
+	private static function fromArrayList($array,&$session)
+	{
+		$list=[];
+		
+		foreach($array as $element){
+			$list[]=self::fromArraySingle($element,$session);
+		}
+		
+		return $list;
+	}
+	
+	/**
+	 * Decodes provided array into an entity.
+	 * 
+	 * @param array $array
+	 * @param array $session An array of already decoded objects and their keys.
+	 * @return FieldEntity
+	 */
+	private static function fromArraySingle($array,&$session)
+	{
+		$key=$array["Key"];
+		
+		if(!isset($array["Type"])){
+			// is only a key
+			// should be already present in the lookup table
+			if(!isset($session[$key])){
+				throw new Exception("Provided array was not in a correct format: key not found.");
+			}
+			return $session[$key];
+		}
+		
+		$type=$array["Type"];
+		$class=BlueDBProperties::instance()->Namespace_Entities."\\$type";
+		
+		$classData=self::getClassData($class);
+		if(!$classData[0]){
+			throw new Exception("Class '$class' does not exist. Did you forget to set the namespace for entities in the configuration?");
+		}
+		
+		$entity=new $class();
+		
+		// add to lookup table
+		$session[$key]=$entity;
+		
+		foreach($array["Properties"] as $propertyName => $propertyValue){
+			/*
+			if(!property_exists($class, $propertyName)){
+				throw new Exception("Property '$propertyName' does not exist in class '$class'.");
+			}
+			*/
+			
+			if($propertyValue===null){
+				$entity->$propertyName=null;
+				continue;
+			}
+			
+			$propertyBaseConstName="$class::$propertyName";
+			
+			$fieldTypeConstName=$propertyBaseConstName."FieldType";
+			if(defined($fieldTypeConstName)){
+				$propertyFieldType=constant($fieldTypeConstName);
+			}else{
+				// let's assume that it's the parent field of a sub entity
+				$propertyFieldType=FieldTypeEnum::MANY_TO_ONE;
+			}
+			
+			switch($propertyFieldType){
+				case FieldTypeEnum::PROPERTY:
+					$propertyType=constant($propertyBaseConstName."PropertyType");
+					$value=PropertySanitizer::sanitize($propertyValue,$propertyType);
+					break;
+				case FieldTypeEnum::MANY_TO_ONE:
+					$value=self::fromArraySingle($propertyValue,$session);
+					break;
+				case FieldTypeEnum::ONE_TO_MANY:
+				case FieldTypeEnum::MANY_TO_MANY:
+					$value=self::fromArrayList($propertyValue,$session);
+					break;
+				default:
+					throw new Exception("Unsupported field type: '$propertyFieldType'.");
+			}
+			
+			$entity->$propertyName=$value;
+		}
+		
+		return $entity;
+	}
+	
+	/**
+	 * Decodes provided JSON string.
+	 * 
+	 * Note that the JSON must be in a correct format.
+	 * 
+	 * @param string $json A JSON encoded string.
+	 * @return array|FieldEntity A single or an array of entities.
+	 * @throws Exception
+	 */
+	public static function fromJson($json)
+	{
+		$array=json_decode($json,true);
+		if($array===null){
+			throw new Exception("");
+		}
+		return self::fromArray($array);
+	}
+	
+	/**
+	 * @param array $fieldsToIgnore
+	 * @param array $session An array of already used objects and their keys, grouped by class.
+	 * @return array
+	 */
+	private function toArrayInternal($fieldsToIgnore,&$session)
+	{
+		$class=static::class;
+		
+		// check if already present in the session
+		if(isset($session[$class])){
+			foreach($session[$class] as $key => $object){
+				if($object===$this){
+					$array=[];
+					$array["Key"]=$key;
+					return $array;
+				}
+			}
+		}else{
+			$session[$class]=[];
+		}
+		
+		// add it to the session
+		$key=self::$KEYCounter++;
+		$session[$class][$key]=$this;
+		
+		// add properties
+		$properties=[];
+		$fields=$class::getFieldList();
+		foreach($fields as $field){
+			if($this->$field===null){
+				continue;
+			}
+			if($fieldsToIgnore!==null && in_array($field,$fieldsToIgnore)){
+				continue;
+			}
+			
+			$baseFieldConstName=$class."::".$field;
+			$fieldType=constant($baseFieldConstName."FieldType");
+			
+			switch($fieldType){
+				case FieldTypeEnum::PROPERTY:
+					$propertyType=constant($baseFieldConstName."PropertyType");
+					$propertyValue=PropertyTypeEnum::convertToString($this->$field, $propertyType);
+					break;
+				case FieldTypeEnum::MANY_TO_ONE:
+					/* @var $fieldEntity FieldEntity */
+					$fieldEntity=$this->$field;
+					$propertyValue=$fieldEntity->toArrayInternal(null,$session);
+					break;
+				case FieldTypeEnum::ONE_TO_MANY:
+				case FieldTypeEnum::MANY_TO_MANY:
+					$propertyValue=[];
+					foreach($this->$field as $element){
+						/* @var $element FieldEntity */
+						$propertyValue[]=$element->toArrayInternal(null,$session);
+					}
+					break;
+				default:
+					throw new Exception("Field type '$fieldType' is not supported.");
+			}
+			
+			$properties[$field]=$propertyValue;
+		}
+		
+		$classData=self::getClassData($class);
+		$isSubEntity=$classData[1];
+		if($isSubEntity){
+			// add parent as a property
+			$parentFieldName=$class::getParentFieldName();
+			/* @var $parent FieldEntity */
+			$parent=$this->$parentFieldName;
+			
+			$properties[$parentFieldName]=$parent->toArrayInternal($fieldsToIgnore, $session);
+		}
+		
+		$array=[];
+		$array["Type"]=$this->getClassName();
+		$array["Key"]=$key;
+		$array["Properties"]=$properties;
+		
+		return $array;
+	}
+	
+	/**
+	 * Lookup table for unqualified short class names without the namespace.
+	 * 
+	 * @var array
+	 */
+	private static $classNames=[];
+	
+	/**
+	 * Gets the unqualified short class name without the namespace.
+	 * 
+	 * @return string
+	 */
+	private function getClassName()
+	{
+		$class=static::class;
+		
+		// search in lookup table
+		if(isset(self::$classNames[$class]))
+			return self::$classNames[$class];
+		
+		$shortClassName=substr($class,strrpos($class,"\\")+1);
+		
+		// save to lookup table
+		self::$classNames[$class]=$shortClassName;
+		
+		return $shortClassName;
+	}
+	
 	/**
 	 * Lookup table for field lists of entity classes.
 	 * 

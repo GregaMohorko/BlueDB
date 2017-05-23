@@ -30,7 +30,7 @@ abstract class DatabaseTable implements IDatabaseTable
 		if($inclManyToOne!==null && $inclOneToMany!==null && $inclManyToMany!==null)
 			return;
 		
-		$config=BlueDBProperties::Instance();
+		$config=BlueDBProperties::instance();
 		if($inclManyToOne===null)
 			$inclManyToOne=$config->includeManyToOne;
 		if($inclOneToMany===null)
@@ -380,7 +380,7 @@ abstract class DatabaseTable implements IDatabaseTable
 			switch($fieldType){
 				case FieldTypeEnum::PROPERTY:
 					$propertyType=constant($baseFieldConstName."PropertyType");
-					$entity->$fieldName=PropertyTypeCreator::create($fieldValue, $propertyType);
+					$entity->$fieldName=PropertyCreator::create($fieldValue, $propertyType);
 					break;
 				case FieldTypeEnum::MANY_TO_ONE:
 					$entity->$fieldName=$fieldValue;

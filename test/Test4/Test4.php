@@ -15,7 +15,9 @@ require_once 'Student_Subject.php';
 use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Expression;
 use BlueDB\DataAccess\Criteria\Criteria;
-
+use BlueDB\Configuration\BlueDBProperties;
+use BlueDB\IO\JSON;
+use BlueDB\Utility\EntityUtility;
 use Test4\Student;
 use Test4\Subject;
 use Test4\Student_Subject;
@@ -29,6 +31,10 @@ class Test4 extends Test
 {
 	public function run()
 	{
+		// set the namespace for entities (this can also be done in the config.ini file)
+		BlueDBProperties::instance()->Namespace_Entities="Test4";
+		
+		// run the .sql script
 		$sqlScript=file_get_contents("Test4/Test4.sql");
 		if($sqlScript===false){
 			echo "<b>Error:</b> Failed to read contents of Test4.sql.";
@@ -39,6 +45,7 @@ class Test4 extends Test
 		$this->testLoadListForSide();
 		$this->testLoadListForSideByCriteria();
 		$this->testLink();
+		$this->testJson();
 		$this->testUnlink();
 		$this->testUnlinkMultiple();
 		$this->testLinkMultiple();
@@ -114,6 +121,30 @@ class Test4 extends Test
 		assert(count($subjectsOfLeon)===2,"Linking Leon and Geography");
 		assert($subjectsOfLeon[0]->Name==="Math","Linking Leon and Geography");
 		assert($subjectsOfLeon[1]->Name==="Geography","Linking Leon and Geography");
+	}
+	
+	private function testJson()
+	{
+		$leon=Student::loadByID(1);
+		$matic=Student::loadByID(2);
+		$tadej=Student::loadByID(3);
+		
+		// encode a single entity to JSON and then decode
+		$json=JSON::encode($leon);
+		$leonDecoded=JSON::decode($json);
+		assert(EntityUtility::areEqual($leon, $leonDecoded),"JSON encode decode");
+		
+		// clone?
+		$tadejClone=clone $tadej;
+		assert(EntityUtility::areEqual($tadej, $tadejClone),"JSON encode decode clone");
+		
+		// encode and decode a list of entities
+		$list=[$leon,$matic,$tadej];
+		$json=JSON::encode($list);
+		$list=JSON::decode($json);
+		assert(EntityUtility::areEqual($leon, $list[0]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($matic, $list[1]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($tadej, $list[2]),"JSON encode decode list");
 	}
 	
 	private function testUnlink()

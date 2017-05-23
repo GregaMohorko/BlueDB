@@ -15,6 +15,9 @@ require_once 'Attendance.php';
 use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
+use BlueDB\Configuration\BlueDBProperties;
+use BlueDB\IO\JSON;
+use BlueDB\Utility\EntityUtility;
 use Test5\Student;
 use Test5\Subject;
 use Test5\Attendance;
@@ -26,6 +29,10 @@ class Test5 extends Test
 {
 	public function run()
 	{
+		// set the namespace for entities (this can also be done in the config.ini file)
+		BlueDBProperties::instance()->Namespace_Entities="Test5";
+		
+		// run the .sql script
 		$sqlScript=file_get_contents("Test5/Test5.sql");
 		if($sqlScript===false){
 			echo "<b>Error:</b> Failed to read contents of Test5.sql.";
@@ -40,6 +47,7 @@ class Test5 extends Test
 		$this->testLoadListFor();
 		$this->testLoadListForByCriteria();
 		$this->testLoadListByCriteria();
+		$this->testJson();
 		$this->testUnlink();
 		$this->testUnlinkMultiple();
 		$this->testExpressions();
@@ -202,6 +210,30 @@ class Test5 extends Test
 		$criteria->add(Expression::above(Attendance::class, Attendance::AverageGradeField, 7.5));
 		$attendances=Attendance::loadListByCriteria($criteria);
 		assert(count($attendances)===3);
+	}
+	
+	private function testJson()
+	{
+		$leon=Student::loadByID(1);
+		$matic=Student::loadByID(2);
+		$tadej=Student::loadByID(3);
+		
+		// encode a single entity to JSON and then decode
+		$json=JSON::encode($leon);
+		$leonDecoded=JSON::decode($json);
+		assert(EntityUtility::areEqual($leon, $leonDecoded),"JSON encode decode");
+		
+		// clone?
+		$tadejClone=clone $tadej;
+		assert(EntityUtility::areEqual($tadej, $tadejClone),"JSON encode decode clone");
+		
+		// encode and decode a list of entities
+		$list=[$leon,$matic,$tadej];
+		$json=JSON::encode($list);
+		$list=JSON::decode($json);
+		assert(EntityUtility::areEqual($leon, $list[0]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($matic, $list[1]),"JSON encode decode list");
+		assert(EntityUtility::areEqual($tadej, $list[2]),"JSON encode decode list");
 	}
 	
 	private function testUnlink()
