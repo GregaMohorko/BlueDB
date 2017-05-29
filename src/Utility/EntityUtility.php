@@ -58,7 +58,7 @@ abstract class EntityUtility
 		if(isset($session[$class1])){
 			foreach($session[$class1] as $pair){
 				if(($pair[0]===$entity1 && $pair[1]===$entity2) ||
-					($pair[0]===$entity2 && $pair[1]===$entity2)){
+					($pair[0]===$entity2 && $pair[1]===$entity1)){
 					// found the pair
 					return true;
 				}
