@@ -12,7 +12,7 @@ You can read the documentation and tutorials under the [Wiki](https://github.com
 
 Let's assume that we have an entity *User*.
 
-Loading all entries:
+**Loading** all entries:
 ```PHP
 $all = User::loadList();
 ```
@@ -32,38 +32,42 @@ $criteria->add(Expression::startsWith(User::class, User::UsernameField, "Ja"));
 $results = User::loadListByCriteria($criteria);
 ```
 
-Encoding/decoding entities to/from JSON? No problem!
+**Encoding/decoding** entities to/from JSON? No problem!
 ```PHP
 $json = JSON::encode($entity);
 $entity = JSON::decode($json);
 ```
 
-Creating a new entry:
+**Creating** a new entry:
 ```PHP
 $gordon = new User();
 $gordon->Username = "Gordon";
 User::save($gordon);
 ```
 
-Updating entries:
+**Updating** entries:
 ```PHP
 // let's change Gordons username to 'Freeman'
 $gordon->Username = "Freeman";
 User::update($gordon);
 ```
 
-Deleting entries:
+**Deleting** entries:
 ```PHP
 // let's delete Gordon
 User::delete($gordon);
 ```
 
-These short examples were just the top of the iceberg, BlueDB has many many more cool features. To find them out and for more complex examples & tutorials, please go to [Wiki](https://github.com/GregaMohorko/bluedb/wiki).
+These short examples are just the top of the iceberg, BlueDB has many many more cool features. To find them out and for more complex examples & tutorials, please go to [Wiki](https://github.com/GregaMohorko/bluedb/wiki).
 
 ## Requirements
 
 PHP version >= 5.5
 
-## License
+## Author and License
+
+Grega Mohorko ([www.mohorko.info](http://www.mohorko.info))
+
+Copyright (c) 2017 Grega Mohorko
 
 [Apache License 2.0](./LICENSE)
