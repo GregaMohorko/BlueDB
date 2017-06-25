@@ -582,26 +582,40 @@ class Expression
 				$joins[$class]=Joiner::createJoinArray(JoinType::INNER, $joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 				
 				foreach($fields as $joinField){
+					$value=$object->$joinField;
+					if($value===null){
+						continue;
+					}
+					
 					$joiningFieldBaseConstName="$class::$joinField";
 					$type=constant($joiningFieldBaseConstName."FieldType");
 					
-					$value=$object->$joinField;
 					switch($type){
 						case FieldTypeEnum::PROPERTY:
-							if($value!==null){
-								$column=constant($joiningFieldBaseConstName."Column");
-								$propertyType=constant($joiningFieldBaseConstName."PropertyType");
-								$valueAsString=PropertyTypeEnum::convertToString($value, $propertyType);
-								$term="$joinName.$column=?";
-								$valueType=PropertyTypeEnum::getPreparedStmtType($propertyType);
-								$values=[$valueAsString];
-								$valueTypes=[$valueType];
-								$expressions[]=new Expression($class,$joins,$term,$values,$valueTypes);
-							}
+							$column=constant($joiningFieldBaseConstName."Column");
+							$propertyType=constant($joiningFieldBaseConstName."PropertyType");
+							$valueAsString=PropertyTypeEnum::convertToString($value, $propertyType);
+							$term="$joinName.$column=?";
+							$valueType=PropertyTypeEnum::getPreparedStmtType($propertyType);
+							$values=[$valueAsString];
+							$valueTypes=[$valueType];
+							$expressions[]=new Expression($class,$joins,$term,$values,$valueTypes);
 							break;
+						case FieldTypeEnum::MANY_TO_ONE:
+							/* @var $value FieldEntity */
+							$manyToOneEntityID=$value->getID();
+							if($manyToOneEntityID===null){
+								break;
+							}
+							$column=constant($joiningFieldBaseConstName."Column");
+							$term="$joinName.$column=?";
+							$valueAsString=PropertyTypeEnum::convertToString($manyToOneEntityID, PropertyTypeEnum::INT);
+							$valueType=PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
+							$values=[$valueAsString];
+							$valueTypes=[$valueType];
+							$expressions[]=new Expression($class,$joins,$term,$values,$valueTypes);
 						default:
-							if($value!==null)
-								trigger_error("Only fields of type PROPERTY are considered inside Expression::Equals.",E_USER_NOTICE);
+							trigger_error("Only fields of type PROPERTY and MANY_TO_ONE are considered inside Expression::Equals.",E_USER_NOTICE);
 							break;
 					}
 				}
