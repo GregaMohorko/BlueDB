@@ -2,7 +2,7 @@
 
 A PHP MySQL library with Database First model that lets you create Entities with base properties and complex relationships (*One-To-Many*, *Many-To-One*, *Many-To-Many*, *Table Inheritance*, *Associative tables*), supports queries with expressions, JSON encoding/decoding and is simple to use.
 
-Latest release: [v1.1](https://github.com/GregaMohorko/bluedb/releases/latest)
+[![Release](https://img.shields.io/github/release/GregaMohorko/BlueDB.svg?style=flat-square)](https://github.com/GregaMohorko/BlueDB/releases/latest)
 
 ## Documentation & Tutorials
 
