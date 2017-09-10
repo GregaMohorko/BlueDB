@@ -66,7 +66,7 @@ PHP version >= 5.5
 
 ## Author and License
 
-Grega Mohorko ([www.mohorko.info](http://www.mohorko.info))
+Grega Mohorko ([www.mohorko.info](https://www.mohorko.info))
 
 Copyright (c) 2017 Grega Mohorko
 
