@@ -5,7 +5,7 @@
  * 
  * Bootstrap file for BlueDB library.
  * 
- * Version 1.0.0.0
+ * Version 1.1.0.0
  * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
