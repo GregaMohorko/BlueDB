@@ -254,7 +254,7 @@ class Expression
 	}
 	
 	/**
-	 * Used for int,float,date,time and datetime properties.
+	 * Used for int,float,date,time and datetime properties. Min and max are inclusive.
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
@@ -287,6 +287,11 @@ class Expression
 		
 		$minS=PropertyTypeEnum::convertToString($min, $propertyType);
 		$maxS=PropertyTypeEnum::convertToString($max, $propertyType);
+		
+		if($propertyType=== PropertyTypeEnum::DATE){
+			// to make the whole date inclusive, set the time of max to 23:59:59
+			$maxS.=" 23:59:59";
+		}
 		
 		if($criteriaClass==$parentClass){
 			$termName=$parentClass::getTableName();
