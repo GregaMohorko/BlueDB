@@ -88,6 +88,13 @@ interface IFieldEntity extends IDatabaseTable
 	static function fromJson($json);
 	
 	/**
+	 * Creates an empty instance of the called entity class. Especially useful for SubEntity types for initializing parents.
+	 * 
+	 * @return IFieldEntity
+	 */
+	static function createEmpty();
+	
+	/**
 	 * @return string
 	 */
 	static function getIDColumn();

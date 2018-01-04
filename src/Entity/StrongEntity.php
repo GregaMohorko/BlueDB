@@ -52,6 +52,18 @@ abstract class StrongEntity extends FieldEntity
 	}
 	
 	/**
+	 * Creates an empty instance of this StrongEntity. Simply creates a new object of the called entity class.
+	 * 
+	 * @return StrongEntity
+	 */
+	public static function createEmpty()
+	{
+		$calledClass=get_called_class();
+		$entity=new $calledClass();
+		return $entity;
+	}
+	
+	/**
 	 * @param int $ID
 	 * @param array $fields
 	 * @param array $fieldsToIgnore
