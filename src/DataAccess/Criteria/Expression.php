@@ -378,9 +378,11 @@ class Expression
 	/**
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $term The term to put in the 'where' part of the SQL query.
-	 * @param array $parameters [optional] Parameters for the term, used for prepared statements. Every parameter is its own array of size 2, where the first element is the value, and the second element is the type as PropertyTypeEnum. For example: [[42,PropertyTypeEnum::INT],["John",PropertyTypeEnum::TEXT]].
+	 * @param array $parameters [optional] Parameters for the term, used for prepared statements where a parameter is represented with the '?' mark. Every parameter is its own array of size 2, where the first element is the value, and the second element is the type as PropertyTypeEnum. For example: [[42,PropertyTypeEnum::INT],["John",PropertyTypeEnum::TEXT]].
+	 * @param array $joins
+	 * 
 	 */
-	public static function custom($criteriaClass,$term,$parameters=null)
+	public static function custom($criteriaClass,$term,$parameters=null,$joins=null)
 	{
 		if($parameters===null){
 			$values=null;
@@ -397,7 +399,7 @@ class Expression
 				$valueTypes[]=$valueType;
 			}
 		}
-		return new Expression($criteriaClass,null,$term,$values,$valueTypes);
+		return new Expression($criteriaClass,$joins,$term,$values,$valueTypes);
 	}
 	
 	/**
