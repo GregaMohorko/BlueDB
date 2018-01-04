@@ -104,7 +104,7 @@ abstract class PropertyCreator
 	}
 	
 	/**
-	 * @param type $value
+	 * @param mixed $value
 	 * @return DateTime
 	 */
 	public static function createDate($value)
