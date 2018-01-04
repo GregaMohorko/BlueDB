@@ -3,6 +3,20 @@
 /*
  * Criteria.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 14, 2017 Grega Mohorko
@@ -73,16 +87,18 @@ class Criteria
 					foreach($arrayByJoinType as $joinBasePlace => $arrayByJoinBasePlace){
 						foreach($arrayByJoinBasePlace as $joinBaseColumn => $arrayByJoinBaseColumn){
 							foreach($arrayByJoinBaseColumn as $joinColumn => $joinName){
-								if(in_array($joinName, $alreadyIncludedJoins))
+								if(in_array($joinName, $alreadyIncludedJoins)){
 									continue;
+								}
 								$alreadyIncludedJoins[]=$joinName;
 
 								$joinTable=$joiningEntityClass::getTableName();
 
-								if(!$isFirst)
+								if(!$isFirst){
 									$queryJoins.=" ";
-								else
+								} else{
 									$isFirst=false;
+								}
 
 								$queryJoins.="$joinType JOIN $joinTable AS $joinName ON $joinBasePlace.$joinBaseColumn=$joinName.$joinColumn";
 							}
@@ -102,9 +118,9 @@ class Criteria
 		foreach($this->expressions as $expression){
 			/*@var $expression Expression*/
 
-			if(!$isFirst)
+			if(!$isFirst){
 				$queryConditions.=" AND ";
-			else{
+			} else{
 				$queryConditions.="(";
 				$isFirst=false;
 			}
@@ -116,8 +132,9 @@ class Criteria
 			}
 		}
 		
-		if(!empty($queryConditions))
-			$queryConditions.=")";
+		if(!empty($queryConditions)){
+			$queryConditions.=")";			
+		}
 		
 		$this->PreparedQueryJoins=$queryJoins;
 		$this->PreparedQueryRestrictions=$queryConditions;

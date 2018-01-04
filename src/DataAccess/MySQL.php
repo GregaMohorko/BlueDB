@@ -3,6 +3,20 @@
 /* 
  * MySQLConnection.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 14, 2017 Grega Mohorko
@@ -36,8 +50,9 @@ class MySQL
 	 */
 	private static function instance()
 	{
-		if(self::$instance===null)
+		if(self::$instance===null){
 			self::$instance=new MySQL();
+		}
 		return self::$instance;
 	}
 	
@@ -46,8 +61,9 @@ class MySQL
 	 */
 	public static function close()
 	{
-		if(self::$instance===null)
+		if(self::$instance===null){
 			return;
+		}
 		
 		self::$instance->Source->close();
 		self::$instance=null;
@@ -65,8 +81,9 @@ class MySQL
 		
 		$this->Source=new mysqli($properties->MySQL_host, $properties->MySQL_username, $properties->MySQL_password, $properties->MySQL_databaseName);
 		
-		if($this->Source->connect_errno)
+		if($this->Source->connect_errno){
 			throw new Exception("Failed to connect to the '".$properties->MySQL_databaseName."' database: [".$this->Source->errno."] ".$this->Source->connect_error,$this->Source->errno);
+		}
 		
 		// tell the server that it should expect UTF-8 encoding from the client, and not just pure ASCII
 		$this->Source->set_charset("utf8");
@@ -92,8 +109,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->begin_transaction())
+		if(!$instance->Source->begin_transaction()){
 			throw new Exception("Could not begin transaction: [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -103,8 +121,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->commit())
+		if(!$instance->Source->commit()){
 			throw new Exception("Could not commit: [".$instance->Source->errno."] ".$instance->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -114,8 +133,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->rollback())
+		if(!$instance->Source->rollback()){
 			throw new Exception("Could not roll back transaction: [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -132,8 +152,9 @@ class MySQL
 		$instance=self::instance();
 		
 		$result=$instance->Source->query($selectQuery,$resultMode);
-		if(!$result)
+		if(!$result){
 			throw new Exception("Error while executing select query '".$selectQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 		
 		$array=self::arrayFromResult($result,$resultType);
 		return $array;
@@ -153,8 +174,9 @@ class MySQL
 		$instance=self::instance();
 		
 		$result=$instance->Source->query($selectQuery, $resultMode);
-		if(!$result)
+		if(!$result){
 			throw new Exception("Error while executing select query '".$selectQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 		
 		if($result->num_rows>1){
 			$result->free();
@@ -172,8 +194,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->real_query($insertQuery))
+		if(!$instance->Source->real_query($insertQuery)){
 			throw new Exception("Error while executing insert query '".$insertQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -183,8 +206,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->real_query($updateQuery))
+		if(!$instance->Source->real_query($updateQuery)){
 			throw new Exception("Error while executing update query '".$updateQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -206,8 +230,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->real_query($setQuery))
+		if(!$instance->Source->real_query($setQuery)){
 			throw new Exception("Error while executing set query '".$setQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -219,8 +244,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->real_query($query))
+		if(!$instance->Source->real_query($query)){
 			throw new Exception("Error while executing query '".$query."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -232,12 +258,14 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->multi_query($queries))
+		if(!$instance->Source->multi_query($queries)){
 			throw new Exception("Error while executing the first statement of multi queries '$queries': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 		
 		while($instance->Source->more_results()){
-			if($instance->Source->next_result())
+			if($instance->Source->next_result()){
 				continue;
+			}
 			
 			throw new Exception("Error while executing one of the statements of multi queries '$queries': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
 		}
@@ -250,8 +278,9 @@ class MySQL
 	{
 		$instance=self::instance();
 		
-		if(!$instance->Source->real_query($deleteQuery))
+		if(!$instance->Source->real_query($deleteQuery)){
 			throw new Exception("Error while executing delete query '".$deleteQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 	}
 	
 	/**
@@ -265,16 +294,19 @@ class MySQL
 		$instance=self::instance();
 		
 		$stmt=$instance->Source->prepare($sqlPreparedStatement);
-		if(!$stmt)
+		if(!$stmt){
 			throw new Exception("Error while preparing statement '".$sqlPreparedStatement."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
+		}
 		
 		// bind parameter array
-		if(!call_user_func_array(array($stmt,"bind_param"), $parameters))
+		if(!call_user_func_array(array($stmt,"bind_param"), $parameters)){
 			throw new Exception("Error while binding parameters to the prepared statement.");
+		}
 		
 		// execute
-		if(!$stmt->execute())
+		if(!$stmt->execute()){
 			throw new Exception("Error while executing prepared statement '".$sqlPreparedStatement."': [".$stmt->errno."] ".$stmt->error,$stmt->errno);
+		}
 		
 		return $stmt;
 	}
@@ -312,8 +344,9 @@ class MySQL
 		if($result->num_rows>1){
 			$result->free();
 			throw new Exception("The single statement '".$sqlPreparedSelectStatement."' did not return only one row.");
-		}else if($result->num_rows==0)
+		}else if($result->num_rows==0){
 			return null;
+		}
 		
 		$retArray=self::arrayFromResult($result, $resultType);
 		return $retArray[0];
@@ -329,8 +362,9 @@ class MySQL
 		$stmt=self::prepareAndExecuteStatement($sqlPreparedStatement, $parameters);
 		// get result
 		$result=$stmt->get_result();
-		if(!$result)
+		if(!$result){
 			throw new Exception("Error while getting result for prepared statement '".$sqlPreparedStatement."': [".$stmt->errno."] ".$stmt->error);
+		}
 		
 		return $result;
 	}

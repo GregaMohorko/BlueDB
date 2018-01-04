@@ -3,6 +3,20 @@
 /*
  * Expression.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 14, 2017 Grega Mohorko
@@ -63,10 +77,11 @@ class Expression
 	private function __construct($entityClass,$joins,$term,$values=null,$valueTypes=null)
 	{
 		$this->EntityClass=$entityClass;
-		if($joins!=null)
+		if($joins!=null){
 			$this->Joins=$joins;
-		else
+		} else{
 			$this->Joins=[];
+		}
 		$this->Term=$term;
 		if($values==null || $valueTypes==null){
 			$this->Values=[];
@@ -104,13 +119,15 @@ class Expression
 	 */
 	private static function aboveOrBelow($criteriaClass,$field,$value,$operator,$hasToPrepareStatement,$parentClass)
 	{
-		if($parentClass===null)
+		if($parentClass===null){
 			$parentClass=$criteriaClass;
+		}
 		
 		$joiningFieldBaseConstName=$parentClass."::".$field;
 		$fieldType=constant($joiningFieldBaseConstName."FieldType");
-		if($fieldType!=FieldTypeEnum::PROPERTY)
+		if($fieldType!=FieldTypeEnum::PROPERTY){
 			throw new Exception("Only PROPERTY field types are allowed for after expressions.");
+		}
 		
 		$propertyType=constant($joiningFieldBaseConstName."PropertyType");
 		switch($propertyType){
@@ -265,13 +282,15 @@ class Expression
 	 */
 	public static function between($criteriaClass,$field,$min,$max,$parentClass=null)
 	{
-		if($parentClass===null)
+		if($parentClass===null){
 			$parentClass=$criteriaClass;
+		}
 		
 		$joiningFieldBaseConstName=$parentClass."::".$field;
 		$fieldType=constant($joiningFieldBaseConstName."FieldType");
-		if($fieldType!=FieldTypeEnum::PROPERTY)
+		if($fieldType!=FieldTypeEnum::PROPERTY){
 			throw new Exception("Only PROPERTY field types are allowed for between expressions. '".$fieldType."' was provided.");
+		}
 		
 		$propertyType=constant($joiningFieldBaseConstName."PropertyType");
 		switch($propertyType){
@@ -327,19 +346,23 @@ class Expression
 	 */
 	public static function contains($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($parentClass==null)
+		if($parentClass==null){
 			$parentClass=$criteriaClass;
+		}
 		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
-		if($value===null)
+		if($value===null){
 			throw new Exception("Null value is not allowed for contains expression.");
-		if(!is_string($value))
+		}
+		if(!is_string($value)){
 			throw new Exception("Value for contains expression must be a string.");
+		}
 		
 		/*@var $type FieldTypeEnum*/
 		$type=constant($joiningFieldBaseConstName."FieldType");
-		if($type!=FieldTypeEnum::PROPERTY)
+		if($type!=FieldTypeEnum::PROPERTY){
 			throw new Exception("Only property fields are allowed in contains expression. The provided field was of type '".$type."'.");
+		}
 		
 		/* @var $propertyType PropertyTypeEnum */
 		$propertyType=constant($joiningFieldBaseConstName."PropertyType");
@@ -413,19 +436,23 @@ class Expression
 	 */
 	public static function endsWith($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($parentClass==null)
+		if($parentClass==null){
 			$parentClass=$criteriaClass;
+		}
 		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
-		if($value===null)
+		if($value===null){
 			throw new Exception("Null value is not allowed for contains expression.");
-		if(!is_string($value))
+		}
+		if(!is_string($value)){
 			throw new Exception("Value for contains expression must be a string.");
+		}
 		
 		/*@var $type FieldTypeEnum*/
 		$type=constant($joiningFieldBaseConstName."FieldType");
-		if($type!=FieldTypeEnum::PROPERTY)
+		if($type!=FieldTypeEnum::PROPERTY){
 			throw new Exception("Only property fields are allowed in contains expression. The provided field was of type '".$type."'.");
+		}
 		
 		/* @var $propertyType PropertyTypeEnum */
 		$propertyType=constant($joiningFieldBaseConstName."PropertyType");
@@ -472,8 +499,9 @@ class Expression
 	 */
 	public static function equal($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($parentClass===null)
+		if($parentClass===null){
 			$parentClass=$criteriaClass;
+		}
 		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
 		if($value===null){
@@ -560,8 +588,9 @@ class Expression
 					// let's check if only the ID is not null
 					$isOnlyIDNotNull=true;
 					foreach($fields as $field){
-						if($field===StrongEntity::IDField)
+						if($field===StrongEntity::IDField){
 							continue;
+						}
 						if($object->$field!==null){
 							$isOnlyIDNotNull=false;
 							break;
@@ -716,19 +745,23 @@ class Expression
 	 */
 	public static function startsWith($criteriaClass,$field,$value,$parentClass=null)
 	{
-		if($parentClass==null)
+		if($parentClass==null){
 			$parentClass=$criteriaClass;
+		}
 		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
-		if($value===null)
+		if($value===null){
 			throw new Exception("Null value is not allowed for contains expression.");
-		if(!is_string($value))
+		}
+		if(!is_string($value)){
 			throw new Exception("Value for contains expression must be a string.");
+		}
 		
 		/*@var $type FieldTypeEnum*/
 		$type=constant($joiningFieldBaseConstName."FieldType");
-		if($type!=FieldTypeEnum::PROPERTY)
+		if($type!=FieldTypeEnum::PROPERTY){
 			throw new Exception("Only property fields are allowed in contains expression. The provided field was of type '".$type."'.");
+		}
 		
 		/* @var $propertyType PropertyTypeEnum */
 		$propertyType=constant($joiningFieldBaseConstName."PropertyType");
@@ -802,23 +835,27 @@ class Expression
 			
 			// merge all joins
 			foreach($expression->Joins as $joiningEntityClass => $arrayByJoiningEntityClass){
-				if(!isset($mergedJoins[$joiningEntityClass]))
+				if(!isset($mergedJoins[$joiningEntityClass])){
 					$mergedJoins[$joiningEntityClass]=[];
+				}
 				$mergedArrayByJoiningEntityClass=&$mergedJoins[$joiningEntityClass];
 				
 				foreach($arrayByJoiningEntityClass as $joinType => $arrayByJoinType){
-					if(!isset($mergedArrayByJoiningEntityClass[$joinType]))
+					if(!isset($mergedArrayByJoiningEntityClass[$joinType])){
 						$mergedArrayByJoiningEntityClass[$joinType]=[];
+					}
 					$mergedArrayByJoinType=&$mergedArrayByJoiningEntityClass[$joinType];
 					
 					foreach($arrayByJoinType as $joinBasePlace => $arrayByJoinBasePlace){
-						if(!isset($mergedArrayByJoinType[$joinBasePlace]))
+						if(!isset($mergedArrayByJoinType[$joinBasePlace])){
 							$mergedArrayByJoinType[$joinBasePlace]=[];
+						}
 						$mergedArrayByJoinBasePlace=&$mergedArrayByJoinType[$joinBasePlace];
 						
 						foreach($arrayByJoinBasePlace as $joinBaseColumn => $arrayByJoinBaseColumn){
-							if(!isset($mergedArrayByJoinBasePlace[$joinBaseColumn]))
+							if(!isset($mergedArrayByJoinBasePlace[$joinBaseColumn])){
 								$mergedArrayByJoinBasePlace[$joinBaseColumn]=[];
+							}
 							$mergedArrayByJoinBaseColumn=&$mergedArrayByJoinBasePlace[$joinBaseColumn];
 							
 							foreach($arrayByJoinBaseColumn as $joinColumn => $joinName){
@@ -831,10 +868,11 @@ class Expression
 				}
 			}
 			
-			if(!$isFirst)
+			if(!$isFirst){
 				$mergedTerm.=" OR ";
-			else
+			} else{
 				$isFirst=false;
+			}
 			
 			$mergedTerm.="(".$expression->Term.")";
 			

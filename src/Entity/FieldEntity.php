@@ -3,6 +3,20 @@
 /*
  * FieldEntity.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 14, 2017 Grega Mohorko
@@ -364,8 +378,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		$class=static::class;
 		
 		// search in lookup table
-		if(isset(self::$classNames[$class]))
+		if(isset(self::$classNames[$class])){
 			return self::$classNames[$class];
+		}
 		
 		$shortClassName=substr($class,strrpos($class,"\\")+1);
 		
@@ -390,8 +405,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		$childClassName=get_called_class();
 		
 		// search in lookup table
-		if(isset(self::$fieldLists[$childClassName]))
+		if(isset(self::$fieldLists[$childClassName])){
 			return self::$fieldLists[$childClassName];
+		}
 		
 		$reflectionObject=new ReflectionClass($childClassName);
 		
@@ -407,9 +423,10 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 				// needs to be checked, because default is false and it doesn't need to be defined
 				if(array_key_exists($isHiddenConstant, $constantList)){
 					// if it is defined, check it's value
-					if($constantList[$isHiddenConstant])
+					if($constantList[$isHiddenConstant]){
 						// it is hidden, do not include it
 						continue;
+					}
 				}
 				
 				$fieldList[]=$constantValue;
@@ -549,14 +566,17 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	{
 		$calledClass=get_called_class();
 		
-		if($beginTransaction)
+		if($beginTransaction){
 			MySQL::beginTransaction();
+		}
 		
-		foreach($fieldEntities as $fieldEntity)
+		foreach($fieldEntities as $fieldEntity){
 			$calledClass::save($fieldEntity, false, false);
+		}
 		
-		if($commit)
+		if($commit){
 			MySQL::commitTransaction();
+		}
 	}
 	
 	/**
@@ -573,14 +593,17 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	{
 		$calledClass=get_called_class();
 		
-		if($beginTransaction)
+		if($beginTransaction){
 			MySQL::beginTransaction();
+		}
 		
-		foreach($fieldEntities as $fieldEntity)
+		foreach($fieldEntities as $fieldEntity){
 			$calledClass::update($fieldEntity, false, false, $fields,$updateParents);
+		}
 		
-		if($commit)
+		if($commit){
 			MySQL::commitTransaction();
+		}
 	}
 	
 	/**
@@ -622,14 +645,17 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	{
 		$calledClass=get_called_class();
 		
-		if($beginTransaction)
+		if($beginTransaction){
 			MySQL::beginTransaction();
+		}
 		
-		foreach($fieldEntities as $fieldEntity)
+		foreach($fieldEntities as $fieldEntity){
 			$calledClass::delete($fieldEntity,false,false);
+		}
 		
-		if($commit)
+		if($commit){
 			MySQL::commitTransaction();
+		}
 	}
 	
 	/**
@@ -643,8 +669,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	public static function exists($field,$value,$parentClass=null)
 	{
 		$childClassName=get_called_class();
-		if($parentClass===null)
+		if($parentClass===null){
 			$parentClass=$childClassName;
+		}
 		
 		$fieldBaseConstName="$parentClass::$field";
 		$fieldType=constant($fieldBaseConstName."FieldType");
@@ -697,16 +724,19 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		$query="SELECT EXISTS(SELECT 1 FROM ".$childTableName;
 		
 		$criteria->prepare();
-		if(!empty($criteria->PreparedQueryJoins))
+		if(!empty($criteria->PreparedQueryJoins)){
 			$query.=" ".$criteria->PreparedQueryJoins;
-		if(!empty($criteria->PreparedQueryRestrictions))
+		}
+		if(!empty($criteria->PreparedQueryRestrictions)){
 			$query.=" WHERE ".$criteria->PreparedQueryRestrictions;
+		}
 		$query.=") AS result";
 		
-		if(count($criteria->PreparedParameters)>1)
+		if(count($criteria->PreparedParameters)>1){
 			$result=MySQL::prepareAndExecuteSelectSingleStatement($query, $criteria->PreparedParameters);
-		else
+		} else{
 			$result=MySQL::selectSingle($query);
+		}
 		
 		return $result["result"]==1;
 	}
@@ -727,23 +757,27 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	{
 		switch($type){
 			case QueryTypeEnum::INSERT:
-				if($fieldEntity->getID()!=null)
+				if($fieldEntity->getID()!=null){
 					throw new Exception("The provided objects ID is not null. Call Update function instead.");
+				}
 				break;
 			case QueryTypeEnum::UPDATE:
-				if($fieldEntity->getID()==null)
+				if($fieldEntity->getID()==null){
 					throw new Exception("The provided objects ID is null. Call Save function instead.");
+				}
 				break;
 			default:
 				throw new Exception("Query of type '$type' is not supported.");
 		}
 		
 		$childClassName=get_class($fieldEntity);
-		if($childClassName!==$calledClass)
+		if($childClassName!==$calledClass){
 			throw new Exception("Type of the provided object '$childClassName' is not the same as the called class '$calledClass'.");
+		}
 		
-		if($beginTransaction)
+		if($beginTransaction){
 			MySQL::beginTransaction();
+		}
 
 		if($isSubEntity && $type===QueryTypeEnum::INSERT){
 			// first, parent tables have to be created ...
@@ -767,8 +801,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$useFieldsOfParent=false;
 		}
 		
-		if($updateParents && $useFieldsOfParent)
+		if($updateParents && $useFieldsOfParent){
 			$fieldsOfParent=[];
+		}
 		
 		switch($type){
 			case QueryTypeEnum::INSERT:
@@ -785,11 +820,13 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$parentID=$fieldEntity->$parentFieldName->getID();
 			$preparedValues[0].="i";
 			$preparedValues[]=&$parentID;
-		}else
+		}else{
 			$isFirst=true;
+		}
 		foreach($fields as $field){
-			if($type===QueryTypeEnum::INSERT && $fieldEntity->$field==null)
+			if($type===QueryTypeEnum::INSERT && $fieldEntity->$field==null){
 				continue;
+			}
 			
 			$fieldBaseConstName="$childClassName::$field";
 			$fieldTypeConstName=$fieldBaseConstName."FieldType";
@@ -802,14 +839,16 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$fieldType=constant($fieldTypeConstName);
 			switch($fieldType){
 				case FieldTypeEnum::PROPERTY:
-					if(!$isFirst)
+					if(!$isFirst){
 						$query.=",";
-					else
+					} else{
 						$isFirst=false;
+					}
 
 					$query.=constant($fieldBaseConstName."Column");
-					if($type==QueryTypeEnum::UPDATE)
+					if($type==QueryTypeEnum::UPDATE){
 						$query.="=?";
+					}
 					
 					/*@var $propertyType PropertyTypeEnum*/
 					$propertyType=constant($fieldBaseConstName."PropertyType");
@@ -820,14 +859,16 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 					++$preparedValuesDirectIndex;
 					break;
 				case FieldTypeEnum::MANY_TO_ONE:
-					if(!$isFirst)
+					if(!$isFirst){
 						$query.=",";
-					else
+					} else{
 						$isFirst=false;
+					}
 					
 					$query.=constant($fieldBaseConstName."Column");
-					if($type==QueryTypeEnum::UPDATE)
+					if($type==QueryTypeEnum::UPDATE){
 						$query.="=?";
+					}
 
 					$preparedValues[0].=PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
 					
@@ -838,8 +879,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 						$object=$fieldEntity->$field;
 						
 						$ID=$object->getID();
-						if($ID==null)
+						if($ID==null){
 							throw new Exception("Field '$field' does not have a set ID.");
+						}
 						
 						$preparedValuesDirect[]=$ID;
 						$preparedValues[]=&$preparedValuesDirect[$preparedValuesDirectIndex];
@@ -869,10 +911,11 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 					if($preparedValuesCount>1){
 						$isFirst=true;
 						for($i=1;$i<$preparedValuesCount;++$i){
-							if(!$isFirst)
+							if(!$isFirst){
 								$query.=",";
-							else
+							} else{
 								$isFirst=false;
+							}
 							$query.="?";
 						}
 					}
@@ -889,9 +932,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			}
 
 			try{
-				if($preparedValuesCount>1)
+				if($preparedValuesCount>1){
 					MySQL::prepareAndExecuteStatement($query, $preparedValues);
-				else{
+				} else{
 					// if no prepared values are present, no need for prepared statement
 					switch($type){
 						case QueryTypeEnum::INSERT:
@@ -907,8 +950,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 				throw $ex;
 			}
 
-			if(!$isSubEntity && $type===QueryTypeEnum::INSERT)
+			if(!$isSubEntity && $type===QueryTypeEnum::INSERT){
 				$fieldEntity->setID(MySQL::autogeneratedID());
+			}
 		}
 		
 		if($type===QueryTypeEnum::UPDATE && $updateParents && !($useFieldsOfParent && empty($fieldsOfParent))){
@@ -918,8 +962,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$parentEntityClass::update($fieldEntity->$parentFieldName,false,false,$fieldsForParent,true);
 		}
 		
-		if($commit)
+		if($commit){
 			MySQL::commitTransaction();
+		}
 	}
 	
 	/**
@@ -940,8 +985,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 */
 	protected static function prepareForDeletion($childClassName,$fieldEntity,$session,$beginTransaction)
 	{
-		if($beginTransaction)
+		if($beginTransaction){
 			MySQL::beginTransaction();
+		}
 		
 		if(isset(self::$pointingBack[$childClassName])){
 			// already in lookup table, no need to search again
@@ -988,9 +1034,10 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			self::$pointingBack[$childClassName]=$pointingBack;
 		}
 		
-		if(empty($pointingBack))
+		if(empty($pointingBack)){
 			// there are no fields that are pointing back ...
 			return;
+		}
 		
 		// now it loads those fields and checks if any of them is actually pointing to the object that is being deleted
 		// and if it is, it sets that field to null
@@ -1005,9 +1052,10 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$criteria=new Criteria($class);
 			$criteria->add(Expression::equal($class, $field, $dto));
 			$objects=$class::loadListByCriteriaInternal($criteria,[],null,false,false,false,$session);
-			if(empty($objects))
+			if(empty($objects)){
 				// nobody is pointing to the entity being deleted
 				continue;
+			}
 
 			if($fieldEntity->$baseField===null){
 				// has to load it

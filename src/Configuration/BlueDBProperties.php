@@ -3,6 +3,20 @@
 /*
  * BlueDBProperties.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 14, 2017 Grega Mohorko
@@ -36,8 +50,9 @@ class BlueDBProperties
 	 */
 	public static function instance()
 	{
-		if(self::$instance===null)
+		if(self::$instance===null){
 			throw new Exception("The BlueDBProperties instance was not initialized.");
+		}
 		return self::$instance;
 	}
 	
@@ -104,8 +119,9 @@ class BlueDBProperties
 	{
 		$mandatoryValues=[self::HOST,self::DB,self::USER,self::PASS];
 		foreach($mandatoryValues as $mandatoryValue){
-			if(!array_key_exists($mandatoryValue, $config))
+			if(!array_key_exists($mandatoryValue, $config)){
 				throw new Exception("The configuration file has to specify a '$mandatoryValue' value.");
+			}
 		}
 		
 		$this->MySQL_host=$config[self::HOST];
@@ -113,21 +129,28 @@ class BlueDBProperties
 		$this->MySQL_username=$config[self::USER];
 		$this->MySQL_password=$config[self::PASS];
 		
-		if(array_key_exists(self::NAMESPACE_ENTITIES, $config))
+		if(array_key_exists(self::NAMESPACE_ENTITIES, $config)){
 			$this->Namespace_Entities=$config[self::NAMESPACE_ENTITIES];
-		if(array_key_exists(self::FORMAT_DATE, $config))
+		}
+		if(array_key_exists(self::FORMAT_DATE, $config)){
 			$this->Format_Date=$config[self::FORMAT_DATE];
-		if(array_key_exists(self::FORMAT_TIME, $config))
+		}
+		if(array_key_exists(self::FORMAT_TIME, $config)){
 			$this->Format_Time=$config[self::FORMAT_TIME];
-		if(array_key_exists(self::FORMAT_DATETIME, $config))
+		}
+		if(array_key_exists(self::FORMAT_DATETIME, $config)){
 			$this->Format_DateTime=$config[self::FORMAT_DATETIME];
+		}
 		
-		if(array_key_exists(self::INCLUDE_MANYTOONE, $config))
+		if(array_key_exists(self::INCLUDE_MANYTOONE, $config)){
 			$this->includeManyToOne=boolval($config[self::INCLUDE_MANYTOONE]);
-		if(array_key_exists(self::INCLUDE_ONETOMANY, $config))
+		}
+		if(array_key_exists(self::INCLUDE_ONETOMANY, $config)){
 			$this->includeOneToMany=boolval($config[self::INCLUDE_ONETOMANY]);
-		if(array_key_exists(self::INCLUDE_MANYTOMANY, $config))
+		}
+		if(array_key_exists(self::INCLUDE_MANYTOMANY, $config)){
 			$this->includeManyToMany=boolval($config[self::INCLUDE_MANYTOMANY]);
+		}
 	}
 	
 	private function __clone() { }

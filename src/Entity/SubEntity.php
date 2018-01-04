@@ -3,6 +3,20 @@
 /*
  * SubEntity.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 15, 2017 Grega Mohorko
@@ -60,12 +74,14 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$childClassName=get_called_class();
 		
 		// search in lookup table
-		if(isset(self::$baseStrongEntityClasses[$childClassName]))
+		if(isset(self::$baseStrongEntityClasses[$childClassName])){
 			return self::$baseStrongEntityClasses[$childClassName];
+		}
 		
 		$current=$childClassName::getParentEntityClass();
-		while(!is_subclass_of($current, StrongEntity::class))
+		while(!is_subclass_of($current, StrongEntity::class)){
 			$current=$current::getParentEntityClass();
+		}
 		
 		// save to lookup table
 		self::$baseStrongEntityClasses[$childClassName]=$current;
@@ -85,8 +101,9 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$currentValue=$this->$parentFieldName;
 		
 		while(true){
-			if(is_subclass_of($currentClass, StrongEntity::class))
+			if(is_subclass_of($currentClass, StrongEntity::class)){
 				return $currentValue;
+			}
 			
 			// is still a SubEntity, go further up
 			$parentFieldName=$currentClass::getParentFieldName();
@@ -111,8 +128,9 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$entity->$parentFieldName=$currentValue;
 		
 		while(true){
-			if(is_subclass_of($currentClass, StrongEntity::class))
+			if(is_subclass_of($currentClass, StrongEntity::class)){
 				break;
+			}
 			
 			$currentClass=$currentClass::getParentEntityClass();
 			$parentFieldName=$currentClass::getParentFieldName();
@@ -167,8 +185,9 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore, $manyToOneFieldsToLoad, $inclManyToOne, $inclOneToMany, $oneToManyListsToLoad, $inclManyToMany, $manyToManyListsToLoad,true,$parentFieldName,$fieldsOfParent);
 		
 		$loadedArray=self::executeSelectSingleQuery($query, $criteria);
-		if($loadedArray===null)
+		if($loadedArray===null){
 			return null;
+		}
 		
 		$parentClass=$childClassName::getParentEntityClass();
 		$loadedEntity=self::createInstance($childClassName, $loadedArray, $manyToOneFieldsToLoad, $oneToManyListsToLoad, $manyToManyListsToLoad, $inclManyToOne, $inclOneToMany, $inclManyToMany, $session, true, $parentClass, $parentFieldName, $fieldsOfParent, $fieldsToIgnore);
@@ -204,8 +223,9 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		}
 		
 		$loadedArrays=self::executeSelectQuery($query, $criteria);
-		if(empty($loadedArrays))
+		if(empty($loadedArrays)){
 			return [];
+		}
 		
 		$loadedSubEntities=[];
 		
@@ -247,10 +267,11 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		if($subEntity===null){
 			// at least open/close the transaction, if it needs to be
 			
-			if($beginTransaction&&!$commit)
+			if($beginTransaction&&!$commit){
 				MySQL::beginTransaction();
-			else if(!$beginTransaction&&$commit)
+			} else if(!$beginTransaction&&$commit){
 				MySQL::commitTransaction();
+			}
 			
 			return;
 		}
@@ -272,10 +293,11 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		if($subEntity===null){
 			// at least open/close the transaction, if it needs to be
 			
-			if($beginTransaction&&!$commit)
+			if($beginTransaction&&!$commit){
 				MySQL::beginTransaction();
-			else if(!$beginTransaction&&$commit)
+			} else if(!$beginTransaction&&$commit){
 				MySQL::commitTransaction();
+			}
 			
 			return;
 		}

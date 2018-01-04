@@ -3,6 +3,20 @@
 /* 
  * Test1.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 15, 2017 Grega Mohorko
@@ -320,9 +334,10 @@ class Test1 extends Test
 		
 		// set everyones email to null and also commit
 		$all=User::loadList([User::IDField,User::EmailField]);
-		foreach($all as $user)
+		foreach($all as $user){
 			/* @var $user User */
 			$user->Email=null;
+		}
 		User::updateList($all, false, true, [User::EmailField]);
 		$criteria=new Criteria(User::class);
 		$criteria->add(Expression::equal(User::class, User::EmailField, null));

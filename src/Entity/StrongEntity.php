@@ -3,6 +3,20 @@
 /*
  * StrongEntity.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Mar 14, 2017 Grega Mohorko
@@ -104,8 +118,9 @@ abstract class StrongEntity extends FieldEntity
 		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$oneToManyListsToLoad,$inclManyToMany,$manyToManyListsToLoad,false,null,$fieldsOfParent);
 		
 		$loadedArray=self::executeSelectSingleQuery($query, $criteria);
-		if($loadedArray===null)
+		if($loadedArray===null){
 			return null;
+		}
 		
 		$loadedEntity=self::createInstance($childClassName, $loadedArray,$manyToOneFieldsToLoad,$oneToManyListsToLoad,$manyToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session,false,null,null,null,null);
 		
@@ -133,8 +148,9 @@ abstract class StrongEntity extends FieldEntity
 		$query=self::prepareSelectQuery($childClassName, $childClassName, null, $criteria, $fields, $fieldsToIgnore,$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$oneToManyListsToLoad,$inclManyToMany,$manyToManyListsToLoad,false,null,$fieldsOfParent);
 		
 		$loadedArrays=self::executeSelectQuery($query, $criteria);
-		if(empty($loadedArrays))
+		if(empty($loadedArrays)){
 			return [];
+		}
 		
 		$loadedEntities=[];
 		
@@ -174,10 +190,11 @@ abstract class StrongEntity extends FieldEntity
 		if($strongEntity===null){
 			// at least open/close the transaction, if it needs to be
 			
-			if($beginTransaction&&!$commit)
+			if($beginTransaction&&!$commit){
 				MySQL::beginTransaction();
-			else if(!$beginTransaction&&$commit)
+			} else if(!$beginTransaction&&$commit){
 				MySQL::commitTransaction();
+			}
 			
 			return;
 		}
@@ -199,16 +216,18 @@ abstract class StrongEntity extends FieldEntity
 		if($strongEntity===null){
 			// at least open/close the transaction, if it needs to be
 			
-			if($beginTransaction&&!$commit)
+			if($beginTransaction&&!$commit){
 				MySQL::beginTransaction();
-			else if(!$beginTransaction&&$commit)
+			} else if(!$beginTransaction&&$commit){
 				MySQL::commitTransaction();
+			}
 			
 			return;
 		}
 		
-		if($strongEntity->ID==null)
+		if($strongEntity->ID==null){
 			throw new Exception("The provided objects ID is null. What are you trying to delete?");
+		}
 		
 		$childClassName=get_class($strongEntity);
 		
@@ -229,7 +248,8 @@ abstract class StrongEntity extends FieldEntity
 			throw $ex;
 		}
 		
-		if($commit)
+		if($commit){
 			MySQL::commitTransaction();
+		}
 	}
 }

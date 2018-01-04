@@ -3,6 +3,20 @@
 /*
  * PropertyTypeSanitizer.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright May 23, 2017 Grega Mohorko
@@ -68,8 +82,9 @@ abstract class PropertySanitizer
 	private static function sanitizeText($escapedValue)
 	{
 		$textValue=filter_var($escapedValue,FILTER_SANITIZE_STRING);
-		if($textValue===false)
+		if($textValue===false){
 			throw new Exception("String filter failed for '$escapedValue'.");
+		}
 		return $textValue;
 	}
 	
@@ -80,8 +95,9 @@ abstract class PropertySanitizer
 	private static function sanitizeInt($escapedValue)
 	{
 		$filteredValue=filter_var($escapedValue, FILTER_VALIDATE_INT);
-		if($filteredValue===false)
+		if($filteredValue===false){
 			throw new Exception("Int filter failed for '$escapedValue'.");
+		}
 		return PropertyCreator::createInt($filteredValue);
 	}
 	
@@ -93,8 +109,9 @@ abstract class PropertySanitizer
 	{
 		$valueWithoutCommas=str_replace(",", ".", $escapedValue);
 		$filteredValue=filter_var($valueWithoutCommas, FILTER_VALIDATE_FLOAT);
-		if($filteredValue===false)
+		if($filteredValue===false){
 			throw new Exception("Float filter failed for '$escapedValue'.");
+		}
 		return PropertyCreator::createFloat($filteredValue);
 	}
 	
@@ -105,8 +122,9 @@ abstract class PropertySanitizer
 	private static function sanitizeEnum($escapedValue)
 	{
 		$filteredValue=filter_var($escapedValue,FILTER_VALIDATE_INT);
-		if($filteredValue===false)
+		if($filteredValue===false){
 			throw new Exception("Int filter failed for '$escapedValue'.");
+		}
 		return PropertyCreator::createEnum($filteredValue);
 	}
 	
@@ -119,8 +137,9 @@ abstract class PropertySanitizer
 	private static function sanitizeBool($escapedValue)
 	{
 		$filteredValue=filter_var($escapedValue, FILTER_VALIDATE_INT,self::$boolFilterOptions);
-		if($filteredValue===false)
+		if($filteredValue===false){
 			throw new Exception("Bool filter failed for '$escapedValue'.");
+		}
 		return PropertyCreator::createBool($filteredValue);
 	}
 	
@@ -158,11 +177,13 @@ abstract class PropertySanitizer
 	 */
 	private static function sanitizeEmail($escapedValue)
 	{
-		if(strlen($escapedValue)==0)
+		if(strlen($escapedValue)==0){
 			return $escapedValue;
+		}
 		$emailValue=filter_var($escapedValue,FILTER_VALIDATE_EMAIL);
-		if($emailValue===false)
+		if($emailValue===false){
 			throw new Exception("Email filter failed for '$escapedValue'.");
+		}
 		return $emailValue;
 	}
 	
@@ -172,8 +193,9 @@ abstract class PropertySanitizer
 	 */
 	private static function sanitizeColor($escapedValue)
 	{
-		if(strlen($escapedValue)!=6)
+		if(strlen($escapedValue)!=6){
 			throw new Exception("Value '$escapedValue' is not a valid color.");
+		}
 		
 		$upperValue=strtoupper($escapedValue);
 		

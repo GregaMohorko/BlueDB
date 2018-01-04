@@ -3,6 +3,20 @@
 /*
  * DatabaseTable.php
  * 
+ * Copyright 2018 Grega Mohorko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  * @project BlueDB
  * @author Grega Mohorko <grega@mohorko.info>
  * @copyright Apr 26, 2017 Grega Mohorko
@@ -27,16 +41,20 @@ abstract class DatabaseTable implements IDatabaseTable
 	 */
 	protected static function checkConfig(&$inclManyToOne,&$inclOneToMany,&$inclManyToMany)
 	{
-		if($inclManyToOne!==null && $inclOneToMany!==null && $inclManyToMany!==null)
+		if($inclManyToOne!==null && $inclOneToMany!==null && $inclManyToMany!==null){
 			return;
+		}
 		
 		$config=BlueDBProperties::instance();
-		if($inclManyToOne===null)
+		if($inclManyToOne===null){
 			$inclManyToOne=$config->includeManyToOne;
-		if($inclOneToMany===null)
+		}
+		if($inclOneToMany===null){
 			$inclOneToMany=$config->includeOneToMany;
-		if($inclManyToMany===null)
+		}
+		if($inclManyToMany===null){
 			$inclManyToMany=$config->includeManyToMany;
+		}
 	}
 	
 	/**
@@ -60,20 +78,23 @@ abstract class DatabaseTable implements IDatabaseTable
 	protected static function prepareSelectQuery($fieldEntityClass,$classToLoad,$joinColumn,$criteria,$fields,$fieldsToIgnore,&$manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,&$oneToManyListsToLoad,$inclManyToMany,&$manyToManyListsToLoad,$isSubEntity,$parentFieldName,&$fieldsOfParent)
 	{
 		$toLoadTableName=$classToLoad::getTableName();
-		if($isSubEntity)
+		if($isSubEntity){
 			$useFieldsOfParent=true;
+		}
 		
 		if($fields===null){
 			$fields=$classToLoad::getFieldList();
-			if($isSubEntity)
+			if($isSubEntity){
 				$useFieldsOfParent=false;
+			}
 		}
 		
 		$manyToOneFieldsToLoad=[];
 		$oneToManyListsToLoad=[];
 		$manyToManyListsToLoad=[];
-		if($isSubEntity && $useFieldsOfParent)
+		if($isSubEntity && $useFieldsOfParent){
 			$fieldsOfParent=[];
+		}
 		
 		$query="SELECT ";
 		if($isSubEntity){
@@ -82,10 +103,12 @@ abstract class DatabaseTable implements IDatabaseTable
 			$query.="$toLoadTableName.".StrongEntity::IDColumn." AS ".StrongEntity::IDField;
 		}
 		foreach($fields as $field){
-			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore))
+			if($fieldsToIgnore!=null && in_array($field, $fieldsToIgnore)){
 				continue;
-			if($field===StrongEntity::IDField)
+			}
+			if($field===StrongEntity::IDField){
 				continue;
+			}
 			
 			$fieldBaseConstName="$classToLoad::$field";
 			$fieldTypeConstName=$fieldBaseConstName."FieldType";
@@ -103,8 +126,9 @@ abstract class DatabaseTable implements IDatabaseTable
 					$query.=",$toLoadTableName.$fieldColumn AS $field";
 					break;
 				case FieldTypeEnum::MANY_TO_ONE:
-					if(!$inclManyToOne)
+					if(!$inclManyToOne){
 						break;
+					}
 					$fieldColumn=constant($fieldBaseConstName."Column");
 					
 					$manyToOneField=[];
@@ -116,8 +140,9 @@ abstract class DatabaseTable implements IDatabaseTable
 					$query.=",$toLoadTableName.$fieldColumn AS $field";
 					break;
 				case FieldTypeEnum::ONE_TO_MANY:
-					if(!$inclOneToMany)
+					if(!$inclOneToMany){
 						break;
+					}
 					$oneToManyList=[];
 					$oneToManyList["Field"]=$field;
 					$oneToManyList["Class"]=constant($fieldBaseConstName."Class");
@@ -125,8 +150,9 @@ abstract class DatabaseTable implements IDatabaseTable
 					$oneToManyListsToLoad[]=$oneToManyList;
 					break;
 				case FieldTypeEnum::MANY_TO_MANY:
-					if(!$inclManyToMany)
+					if(!$inclManyToMany){
 						break;
+					}
 					$manyToManyList=[];
 					$manyToManyList["Field"]=$field;
 					$manyToManyList["Class"]=constant($fieldBaseConstName."Class");
@@ -150,11 +176,13 @@ abstract class DatabaseTable implements IDatabaseTable
 		if($criteria!==null){
 			$criteria->prepare();
 			// joins
-			if(!empty($criteria->PreparedQueryJoins))
+			if(!empty($criteria->PreparedQueryJoins)){
 				$query.=" ".$criteria->PreparedQueryJoins;
+			}
 			// conditions
-			if(!empty($criteria->PreparedQueryRestrictions))
+			if(!empty($criteria->PreparedQueryRestrictions)){
 				$query.=" WHERE ".$criteria->PreparedQueryRestrictions;
+			}
 		}
 		
 		return $query;
@@ -167,8 +195,9 @@ abstract class DatabaseTable implements IDatabaseTable
 	 */
 	protected static function executeSelectQuery($selectQuery,$criteria)
 	{
-		if($criteria!==null && count($criteria->PreparedParameters)>1)
+		if($criteria!==null && count($criteria->PreparedParameters)>1){
 			return MySQL::prepareAndExecuteSelectStatement($selectQuery, $criteria->PreparedParameters);
+		}
 		
 		return MySQL::select($selectQuery);
 	}
@@ -180,8 +209,9 @@ abstract class DatabaseTable implements IDatabaseTable
 	 */
 	protected static function executeSelectSingleQuery($selectSingleQuery,$criteria)
 	{
-		if(count($criteria->PreparedParameters)>1)
+		if(count($criteria->PreparedParameters)>1){
 			return MySQL::prepareAndExecuteSelectSingleStatement($selectSingleQuery,$criteria->PreparedParameters);
+		}
 		
 		return MySQL::selectSingle($selectSingleQuery);
 	}
@@ -244,8 +274,9 @@ abstract class DatabaseTable implements IDatabaseTable
 			$manyToOneClass=$manyToOneField["Class"];
 			$foreignKey=$entity->$manyToOneFieldName;
 			
-			if($foreignKey==null)
+			if($foreignKey==null){
 				continue;
+			}
 			
 			if(is_string($foreignKey)){
 				$foreignKey=intval($foreignKey);
@@ -358,16 +389,19 @@ abstract class DatabaseTable implements IDatabaseTable
 	 */
 	protected static function setFieldValues($entity,$fieldValues,$isSubEntity,$entityClass=null)
 	{
-		if($entityClass===null)
+		if($entityClass===null){
 			$entityClass=get_class($entity);
+		}
 		
 		$isSubEntity=is_subclass_of($entityClass, SubEntity::class);
-		if($isSubEntity)
+		if($isSubEntity){
 			$parentFieldName=$entityClass::getParentFieldName();
+		}
 		
 		foreach($fieldValues as $fieldName => $fieldValue){
-			if(!property_exists($entityClass, $fieldName))
+			if(!property_exists($entityClass, $fieldName)){
 				throw new Exception("The property '$fieldName' does not exist in class '$entityClass'.");
+			}
 			
 			if($isSubEntity && $fieldName==$parentFieldName){
 				// parent field of sub entity is definitely an entity
