@@ -555,7 +555,8 @@ class Expression
 				
 				$isSubEntity=is_subclass_of($object, SubEntity::class);
 				
-				if(!$isSubEntity){
+				
+				if(!$isSubEntity && $criteriaClass===$parentClass){
 					// let's check if only the ID is not null
 					$isOnlyIDNotNull=true;
 					foreach($fields as $field){
@@ -669,6 +670,39 @@ class Expression
 		$term="$joinName.$joinColumn IS NULL";
 		
 		return new Expression($associativeClass,$theJoin,$term);
+	}
+	
+	/**
+	 * An expression used to test for a NOT NULL value.
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
+	 * @return Expression
+	 */
+	public static function isNotNull($criteriaClass,$field,$parentClass=null)
+	{
+		if($parentClass===null){
+			$parentClass=$criteriaClass;
+		}
+		$joiningFieldBaseConstName=$parentClass."::".$field;
+		$column=constant($joiningFieldBaseConstName."Column");
+		if($criteriaClass===$parentClass){
+			// base class does not need a join
+			$termName=$criteriaClass::getTableName();
+			$theJoin=null;
+		}else{
+			$joinBasePlace=$criteriaClass::getTableName();
+			$joinBaseColumn=$criteriaClass::getIDColumn();
+			$joinColumn=$parentClass::getIDColumn();
+
+			$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+			$termName=$joinName;
+			$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+		}
+		$term=$termName.".".$column." IS NOT NULL";
+		
+		return new Expression($parentClass,$theJoin,$term);
 	}
 	
 	/**
