@@ -36,17 +36,18 @@ abstract class JSON
 	 * 
 	 * @param array|FieldEntity $entities A single or an array of field entities to be encoded.
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return string A JSON encoded string.
 	 * @throws Exception
 	 */
-	public static function encode($entities,$fieldsToIgnore=null)
+	public static function encode($entities,$fieldsToIgnore=null,$includeHiddenFields=false)
 	{
 		if(!is_array($entities)){
 			// is a single entity
 			/* @var $entities FieldEntity */
-			return $entities->toJson($fieldsToIgnore);
+			return $entities->toJson($fieldsToIgnore,$includeHiddenFields);
 		}
-		return FieldEntity::toJsonList($entities,$fieldsToIgnore);
+		return FieldEntity::toJsonList($entities,$fieldsToIgnore,$includeHiddenFields);
 	}
 	
 	/**
@@ -54,16 +55,17 @@ abstract class JSON
 	 * 
 	 * @param array|FieldEntity $entities A single or an array of field entities to be converted.
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return array
 	 */
-	public static function toArray($entities,$fieldsToIgnore=null)
+	public static function toArray($entities,$fieldsToIgnore=null, $includeHiddenFields=false)
 	{
 		if(!is_array($entities)){
 			// is a single entity
 			/* @var $fieldsToIgnore FieldEntity */
-			return $entities->toArray($fieldsToIgnore);
+			return $entities->toArray($fieldsToIgnore,$includeHiddenFields);
 		}
-		return FieldEntity::toArrayList($entities, $fieldsToIgnore);
+		return FieldEntity::toArrayList($entities, $fieldsToIgnore,$includeHiddenFields);
 	}
 	
 	/**

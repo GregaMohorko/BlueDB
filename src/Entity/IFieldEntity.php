@@ -42,9 +42,10 @@ interface IFieldEntity extends IDatabaseTable
 	 * When possible, use \BlueDB\IO\JSON::toArray().
 	 * 
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return array
 	 */
-	function toArray($fieldsToIgnore=null);
+	function toArray($fieldsToIgnore=null,$includeHiddenFields=false);
 	
 	/**
 	 * Encodes this field entity into a JSON string.
@@ -52,10 +53,11 @@ interface IFieldEntity extends IDatabaseTable
 	 * When possible, use \BlueDB\IO\JSON::encode().
 	 * 
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return string A JSON encoded string.
 	 * @throws Exception
 	 */
-	function toJson($fieldsToIgnore=null);
+	function toJson($fieldsToIgnore=null,$includeHiddenFields=false);
 	
 	/**
 	 * Converts provided field entities into an array that can be encoded to JSON.
@@ -64,9 +66,10 @@ interface IFieldEntity extends IDatabaseTable
 	 * 
 	 * @param array $entities Field entities to be converted.
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return array
 	 */
-	static function toArrayList($entities,$fieldsToIgnore=null);
+	static function toArrayList($entities,$fieldsToIgnore=null,$includeHiddenFields=false);
 	
 	/**
 	 * Encodes provided field entities to a JSON string.
@@ -75,10 +78,11 @@ interface IFieldEntity extends IDatabaseTable
 	 * 
 	 * @param array $entities Field entities to be encoded.
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return string A JSON encoded string.
 	 * @throws Exception
 	 */
-	static function toJsonList($entities,$fieldsToIgnore=null);
+	static function toJsonList($entities,$fieldsToIgnore=null,$includeHiddenFields=false);
 	
 	/**
 	 * Decodes provided array into entities.
@@ -114,9 +118,10 @@ interface IFieldEntity extends IDatabaseTable
 	static function getIDColumn();
 	
 	/**
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return array
 	 */
-	static function getFieldList();
+	static function getFieldList($includeHiddenFields=false);
 	
 	/**
 	 * @param int $ID

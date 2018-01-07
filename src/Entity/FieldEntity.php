@@ -79,12 +79,13 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 * When possible, use \BlueDB\IO\JSON::toArray().
 	 * 
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return array
 	 */
-	public function toArray($fieldsToIgnore=null)
+	public function toArray($fieldsToIgnore=null,$includeHiddenFields=false)
 	{
 		$session=[];
-		return $this->toArrayInternal($fieldsToIgnore, $session);
+		return $this->toArrayInternal($fieldsToIgnore,$includeHiddenFields, $session);
 	}
 	
 	/**
@@ -94,16 +95,16 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 * 
 	 * @param array $entities Field entities to be converted.
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return array
 	 */
-	public static function toArrayList($entities,$fieldsToIgnore=null)
+	public static function toArrayList($entities,$fieldsToIgnore=null,$includeHiddenFields=false)
 	{
 		$session=[];
 		
-		$elements=[];
 		foreach($entities as $entity){
 			/* @var $entity FieldEntity */
-			$elements[]=$entity->toArrayInternal($fieldsToIgnore, $session);
+			$elements[]=$entity->toArrayInternal($fieldsToIgnore,$includeHiddenFields, $session);
 		}
 		
 		return $elements;
@@ -115,12 +116,13 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 * When possible, use \BlueDB\IO\JSON::encode().
 	 * 
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return string A JSON encoded string.
 	 * @throws Exception
 	 */
-	public function toJson($fieldsToIgnore=null)
+	public function toJson($fieldsToIgnore=null,$includeHiddenFields=false)
 	{
-		$json=json_encode($this->toArray($fieldsToIgnore));
+		$json=json_encode($this->toArray($fieldsToIgnore,$includeHiddenFields));
 		if($json===false){
 			throw new Exception("Encoding a field entity to JSON was not successful.");
 		}
@@ -134,12 +136,13 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 * 
 	 * @param array $entities Field entities to be encoded.
 	 * @param array $fieldsToIgnore [optional]
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return string A JSON encoded string.
 	 * @throws Exception
 	 */
-	public static function toJsonList($entities,$fieldsToIgnore=null)
+	public static function toJsonList($entities,$fieldsToIgnore=null,$includeHiddenFields=false)
 	{
-		$json=json_encode(self::toArrayList($entities, $fieldsToIgnore));
+		$json=json_encode(self::toArrayList($entities, $fieldsToIgnore,$includeHiddenFields));
 		if($json===false){
 			throw new Exception("Encoding a list of field entities to JSON was not successful.");
 		}
@@ -157,7 +160,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	public static function fromArray($array)
 	{
 		$session=[];
-		if(isset($array["Key"])){
+		if(isset($array["Key"]) && isset($array["Type"])){
 			// is a single entity
 			return self::fromArraySingle($array,$session);
 		}
@@ -175,8 +178,8 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	{
 		$list=[];
 		
-		foreach($array as $element){
-			$list[]=self::fromArraySingle($element,$session);
+		foreach($array as $arrayKey => $element){
+			$list[$arrayKey]=self::fromArraySingle($element,$session);
 		}
 		
 		return $list;
@@ -279,10 +282,11 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	
 	/**
 	 * @param array $fieldsToIgnore
+	 * @param bool $includeHiddenFields
 	 * @param array $session An array of already used objects and their keys, grouped by class.
 	 * @return array
 	 */
-	private function toArrayInternal($fieldsToIgnore,&$session)
+	private function toArrayInternal($fieldsToIgnore,$includeHiddenFields,&$session)
 	{
 		$class=static::class;
 		
@@ -305,7 +309,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		
 		// add properties
 		$properties=[];
-		$fields=$class::getFieldList();
+		$fields=$class::getFieldList($includeHiddenFields);
 		foreach($fields as $field){
 			if($this->$field===null){
 				continue;
@@ -325,14 +329,14 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 				case FieldTypeEnum::MANY_TO_ONE:
 					/* @var $fieldEntity FieldEntity */
 					$fieldEntity=$this->$field;
-					$propertyValue=$fieldEntity->toArrayInternal(null,$session);
+					$propertyValue=$fieldEntity->toArrayInternal(null,$includeHiddenFields,$session);
 					break;
 				case FieldTypeEnum::ONE_TO_MANY:
 				case FieldTypeEnum::MANY_TO_MANY:
 					$propertyValue=[];
 					foreach($this->$field as $element){
 						/* @var $element FieldEntity */
-						$propertyValue[]=$element->toArrayInternal(null,$session);
+						$propertyValue[]=$element->toArrayInternal(null,$includeHiddenFields,$session);
 					}
 					break;
 				default:
@@ -350,7 +354,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			/* @var $parent FieldEntity */
 			$parent=$this->$parentFieldName;
 			
-			$properties[$parentFieldName]=$parent->toArrayInternal($fieldsToIgnore, $session);
+			$properties[$parentFieldName]=$parent->toArrayInternal($fieldsToIgnore, $includeHiddenFields, $session);
 		}
 		
 		$array=[];
@@ -398,15 +402,29 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	private static $fieldLists=[];
 	
 	/**
+	 * Lookup table for field lists of entity classes, including hidden fields.
+	 *
+	 * @var array
+	 */
+	private static $fieldListsWithHidden=[];
+	
+	/**
+	 * @param bool $includeHiddenFields [optional] Defaults to FALSE.
 	 * @return array
 	 */
-	public static function getFieldList()
+	public static function getFieldList($includeHiddenFields=false)
 	{
 		$childClassName=get_called_class();
 		
 		// search in lookup table
-		if(isset(self::$fieldLists[$childClassName])){
-			return self::$fieldLists[$childClassName];
+		if($includeHiddenFields){
+			if(isset(self::$fieldListsWithHidden[$childClassName])){
+				return self::$fieldListsWithHidden[$childClassName];
+			}
+		}else{
+			if(isset(self::$fieldLists[$childClassName])){
+				return self::$fieldLists[$childClassName];
+			}
 		}
 		
 		$reflectionObject=new ReflectionClass($childClassName);
@@ -415,16 +433,19 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		$constantList=$reflectionObject->getConstants();
 		
 		$fieldList=[];
+		$fieldListWithHidden=[];
 		
 		foreach($constantList as $constantName => $constantValue){
 			if(StringUtility::endsWith($constantName, "Field")){
+				$fieldListWithHidden[]=$constantValue;
+				
 				// only include it, if it is not hidden
 				$isHiddenConstant=$constantValue."IsHidden";
 				// needs to be checked, because default is false and it doesn't need to be defined
 				if(array_key_exists($isHiddenConstant, $constantList)){
 					// if it is defined, check it's value
 					if($constantList[$isHiddenConstant]){
-						// it is hidden, do not include it
+						// it is hidden
 						continue;
 					}
 				}
@@ -435,8 +456,13 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		
 		// save to lookup table
 		self::$fieldLists[$childClassName]=$fieldList;
+		self::$fieldListsWithHidden[$childClassName]=$fieldListWithHidden;
 		
-		return $fieldList;
+		if($includeHiddenFields){
+			return $fieldListWithHidden;
+		}else{
+			return $fieldList;
+		}
 	}
 	
 	/**
