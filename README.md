@@ -2,6 +2,8 @@
 
 A PHP MySQL library with Database First model that lets you create Entities with base properties and complex relationships (*One-To-Many*, *Many-To-One*, *Many-To-Many*, *Table Inheritance*, *Associative tables*), supports queries with expressions, JSON encoding/decoding and is simple to use.
 
+Check the [BlueDBClient.NET](https://github.com/GregaMohorko/BlueDBClient.NET) for a .NET client library to use on the .NET client side.
+
 [![Release](https://img.shields.io/github/release/GregaMohorko/BlueDB.svg?style=flat-square)](https://github.com/GregaMohorko/BlueDB/releases/latest)
 
 ## Documentation & Tutorials
