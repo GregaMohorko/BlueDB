@@ -244,16 +244,16 @@ abstract class DatabaseTable implements IDatabaseTable
 		}
 		
 		if(!empty($manyToOneFieldsToLoad)){
-			self::loadManyToOneFields($newEntity, $manyToOneFieldsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
+			self::loadManyToOneFields($newEntity, $manyToOneFieldsToLoad,$inclManyToOne,false,false,$session);
 		}
 		if($isSubEntity){
 			$newEntity->$parentFieldName=$parentClass::loadByIDInternal($ID,$fieldsOfParent,$fieldsToIgnore,$inclManyToOne,$inclOneToMany,$inclManyToMany,$session);
 		}
 		if(!empty($oneToManyListsToLoad)){
-			self::loadOneToManyLists($entityClass, $newEntity, $oneToManyListsToLoad,$inclManyToOne,$inclOneToMany,$inclManyToMany,$isSubEntity,$session);
+			self::loadOneToManyLists($entityClass, $newEntity, $oneToManyListsToLoad,$inclManyToOne,false,false,$isSubEntity,$session);
 		}
 		if(!empty($manyToManyListsToLoad)){
-			self::loadManyToManyLists($entityClass, $newEntity, $manyToManyListsToLoad,$inclManyToOne, $inclOneToMany, $inclManyToMany, $session);
+			self::loadManyToManyLists($entityClass, $newEntity, $manyToManyListsToLoad,$inclManyToOne, false, false, $session);
 		}
 		
 		return $newEntity;
