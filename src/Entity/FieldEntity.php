@@ -38,6 +38,10 @@ use BlueDB\Utility\StringUtility;
 
 abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 {
+	const ARRAY_TYPE="Type";
+	const ARRAY_KEY="BlueDBKey";
+	const ARRAY_PROPERTIES="Properties";
+	
 	/**
 	 * Used for key references in creating JSON arrays.
 	 * 
@@ -160,7 +164,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	public static function fromArray($array)
 	{
 		$session=[];
-		if(isset($array["Key"]) && isset($array["Type"])){
+		if(self::isEntityArray($array)){
 			// is a single entity
 			return self::fromArraySingle($array,$session);
 		}
@@ -186,6 +190,17 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	}
 	
 	/**
+	 * Determines whether this array represents an entity.
+	 * 
+	 * @param array $array
+	 * @return bool
+	 */
+	private static function isEntityArray($array)
+	{
+		return isset($array[self::ARRAY_KEY]);
+	}
+	
+	/**
 	 * Decodes provided array into an entity.
 	 * 
 	 * @param array $array
@@ -194,9 +209,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	 */
 	private static function fromArraySingle($array,&$session)
 	{
-		$key=$array["Key"];
+		$key=$array[self::ARRAY_KEY];
 		
-		if(!isset($array["Type"])){
+		if(!isset($array[self::ARRAY_TYPE])){
 			// is only a key
 			// should be already present in the lookup table
 			if(!isset($session[$key])){
@@ -205,7 +220,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			return $session[$key];
 		}
 		
-		$type=$array["Type"];
+		$type=$array[self::ARRAY_TYPE];
 		$class=BlueDBProperties::instance()->Namespace_Entities."\\$type";
 		
 		$classData=self::getClassData($class);
@@ -218,7 +233,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		// add to lookup table
 		$session[$key]=$entity;
 		
-		foreach($array["Properties"] as $propertyName => $propertyValue){
+		foreach($array[self::ARRAY_PROPERTIES] as $propertyName => $propertyValue){
 			/*
 			if(!property_exists($class, $propertyName)){
 				throw new Exception("Property '$propertyName' does not exist in class '$class'.");
@@ -292,10 +307,12 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		
 		// check if already present in the session
 		if(isset($session[$class])){
+			$id=$this->getID();
 			foreach($session[$class] as $key => $object){
-				if($object===$this){
+				/* @var $object FieldEntity */
+				if($object===$this || $object->getID()===$id){
 					$array=[];
-					$array["Key"]=$key;
+					$array[self::ARRAY_KEY]=$key;
 					return $array;
 				}
 			}
@@ -358,9 +375,9 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		}
 		
 		$array=[];
-		$array["Type"]=$this->getClassName();
-		$array["Key"]=$key;
-		$array["Properties"]=$properties;
+		$array[self::ARRAY_TYPE]=$this->getClassName();
+		$array[self::ARRAY_KEY]=$key;
+		$array[self::ARRAY_PROPERTIES]=$properties;
 		
 		return $array;
 	}
