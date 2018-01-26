@@ -98,7 +98,7 @@ abstract class DatabaseTable implements IDatabaseTable
 		
 		$query="SELECT ";
 		if($isSubEntity){
-			$query.="$toLoadTableName.".$classToLoad::getIDColumn()." AS $parentFieldName";
+			$query.="$toLoadTableName.".$classToLoad::getIDColumn()." AS '$parentFieldName'";
 		} else{
 			$query.="$toLoadTableName.".StrongEntity::IDColumn." AS ".StrongEntity::IDField;
 		}
@@ -123,7 +123,7 @@ abstract class DatabaseTable implements IDatabaseTable
 				case FieldTypeEnum::PROPERTY:
 					$fieldColumn=constant($fieldBaseConstName."Column");
 					
-					$query.=",$toLoadTableName.$fieldColumn AS $field";
+					$query.=",$toLoadTableName.$fieldColumn AS '$field'";
 					break;
 				case FieldTypeEnum::MANY_TO_ONE:
 					if(!$inclManyToOne){
@@ -137,7 +137,7 @@ abstract class DatabaseTable implements IDatabaseTable
 					
 					$manyToOneFieldsToLoad[]=$manyToOneField;
 					
-					$query.=",$toLoadTableName.$fieldColumn AS $field";
+					$query.=",$toLoadTableName.$fieldColumn AS '$field'";
 					break;
 				case FieldTypeEnum::ONE_TO_MANY:
 					if(!$inclOneToMany){
