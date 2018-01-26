@@ -108,7 +108,7 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 			// is still a SubEntity, go further up
 			$parentFieldName=$currentClass::getParentFieldName();
 			$currentValue=$currentValue->$parentFieldName;
-			$currentClass=$currentClass::getParentEntityClass;
+			$currentClass=$currentClass::getParentEntityClass();
 		}
 	}
 	
@@ -122,8 +122,8 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$calledClass=get_called_class();
 		
 		$entity=new $calledClass();
-		$currentClass=$calledClass::getParentEntityClass();
 		$parentFieldName=$calledClass::getParentFieldName();
+		$currentClass=$calledClass::getParentEntityClass();
 		$currentValue=new $currentClass();
 		$entity->$parentFieldName=$currentValue;
 		
@@ -132,8 +132,8 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 				break;
 			}
 			
-			$currentClass=$currentClass::getParentEntityClass();
 			$parentFieldName=$currentClass::getParentFieldName();
+			$currentClass=$currentClass::getParentEntityClass();
 			$newValue=new $currentClass();
 			$currentValue->$parentFieldName=$newValue;
 			$currentValue=$newValue;
