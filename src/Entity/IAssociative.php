@@ -78,6 +78,36 @@ interface IAssociative extends IDatabaseTable
 	static function loadListForSideByCriteria($originSide,$ID,$criteria,$fields=null,$fieldsToIgnore=null,$inclManyToOne=null,$inclOneToMany=null,$inclManyToMany=null);
 	
 	/**
+	 * Links two objects.
+	 * 
+	 * @param IFieldEntity $AObject
+	 * @param IFieldEntity $BObject
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
+	 */
+	static function link($AObject,$BObject,$beginTransaction=true,$commit=true);
+	
+	/**
+	 * Links a B object with multiple A objects.
+	 * 
+	 * @param IFieldEntity $BObject
+	 * @param array $AList
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
+	 */
+	static function linkMultipleA($BObject,$AList,$beginTransaction=true,$commit=true);
+	
+	/**
+	 * Links an A object with multiple B objects.
+	 * 
+	 * @param IFieldEntity $AObject
+	 * @param array $BList
+	 * @param bool $beginTransaction [optional]
+	 * @param bool $commit [optional]
+	 */
+	static function linkMultipleB($AObject,$BList,$beginTransaction=true,$commit=true);
+	
+	/**
 	 * Unlinks two objects.
 	 * 
 	 * @param IFieldEntity $AObject

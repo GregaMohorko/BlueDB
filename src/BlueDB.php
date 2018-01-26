@@ -56,7 +56,6 @@ require_once BLUEDB_DIR.'Entity/IFieldEntity.php';
 require_once BLUEDB_DIR.'Entity/ISubEntity.php';
 require_once BLUEDB_DIR.'Entity/IAssociative.php';
 require_once BLUEDB_DIR.'Entity/IAssociativeEntity.php';
-require_once BLUEDB_DIR.'Entity/IAssociativeTable.php';
 require_once BLUEDB_DIR.'Entity/DatabaseTable.php';
 require_once BLUEDB_DIR.'Entity/FieldEntity.php';
 require_once BLUEDB_DIR.'Entity/StrongEntity.php';
