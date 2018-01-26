@@ -24,17 +24,17 @@
 
 namespace BlueDB\Entity;
 
-use Exception;
-use ReflectionClass;
 use BlueDB\Configuration\BlueDBProperties;
-use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
 use BlueDB\DataAccess\JoinType;
+use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Session;
 use BlueDB\Entity\FieldTypeEnum;
 use BlueDB\Entity\PropertyTypeEnum;
 use BlueDB\Utility\StringUtility;
+use Exception;
+use ReflectionClass;
 
 abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 {
@@ -105,10 +105,19 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	public static function toArrayList($entities,$fieldsToIgnore=null,$includeHiddenFields=false)
 	{
 		$session=[];
-		
-		foreach($entities as $entity){
-			/* @var $entity FieldEntity */
-			$elements[]=$entity->toArrayInternal($fieldsToIgnore,$includeHiddenFields, $session);
+		return self::toArrayListInternal($entities, $fieldsToIgnore, $includeHiddenFields,$session);
+	}
+	
+	private static function toArrayListInternal($entities,$fieldsToIgnore,$includeHiddenFields,&$session)
+	{
+		$elements=[];
+		foreach($entities as $entityKey => $entity){
+			if(is_array($entity)){
+				$elements[$entityKey]=self::toArrayListInternal($entity, $fieldsToIgnore, $includeHiddenFields, $session);
+			}else{
+				/* @var $entity FieldEntity */
+				$elements[$entityKey]=$entity->toArrayInternal($fieldsToIgnore,$includeHiddenFields, $session);
+			}
 		}
 		
 		return $elements;
@@ -183,7 +192,15 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 		$list=[];
 		
 		foreach($array as $arrayKey => $element){
-			$list[$arrayKey]=self::fromArraySingle($element,$session);
+			if(self::isEntityArray($element)){
+				$result=self::fromArraySingle($element,$session);
+			}else if(is_array($element)){
+				$result=self::fromArrayList($element, $session);
+			}else{
+				$result=$element;
+			}
+			
+			$list[$arrayKey]=$result;
 		}
 		
 		return $list;
