@@ -702,6 +702,39 @@ class Expression
 	}
 	
 	/**
+	 * User for ManyToMany relationships.
+	 * 
+	 * Loads only those rows that are NOT in the specified associative relationship with the specified entity. For example: if we have a User_Rights associative entity and we want to load all users who don't have the READ right, we would call this like so: isNotInWith(User::class, User_Rights::class, User_Rights::UsersSide, $readRight).
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $associativeClass Associative class where at least one side is the same as the specified criteria class.
+	 * @param string $side Side of the association where the specified criteria class is.
+	 * @param FieldEntity $oppositeSideEntity The entity from the opposite side with which the loaded entities should NOT be in relationship with.
+	 * @return Expression
+	 */
+	public static function isNotInWith($criteriaClass,$associativeClass,$side,$oppositeSideEntity)
+	{
+		$oppositeSide=$associativeClass::getOppositeSide($side);
+		$oppositeSideColumn=constant("$associativeClass::$oppositeSide"."Column");
+		
+		$fieldBaseConstName="$associativeClass::$side";
+		
+		$joinBasePlace=$criteriaClass::getTableName();
+		$joinBaseColumn=$criteriaClass::getIDColumn();
+		$joinColumn=constant($fieldBaseConstName."Column");
+		$joinName=Joiner::getJoinName($associativeClass, JoinType::LEFT_OUTER, $joinBasePlace, $joinBaseColumn, $joinColumn);
+		$theJoin=Joiner::createJoin($associativeClass, JoinType::LEFT_OUTER, $joinBasePlace, $joinBaseColumn, $joinColumn,$joinName);
+		
+		// ignore those that are in relationship with the specified entity
+		$term="$joinName.$oppositeSideColumn <> ?";
+		
+		$values=[$oppositeSideEntity->getID()];
+		$valueTypes=[PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT)];
+		
+		return new Expression($associativeClass, $theJoin, $term, $values, $valueTypes);
+	}
+	
+	/**
 	 * An expression used to test for a NOT NULL value.
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
