@@ -40,6 +40,8 @@ abstract class Joiner
 	private static $_joinNames=[];
 	
 	/**
+	 * Gets (or creates, if it doesn't yet exist) the name for the join with the specified parameters.
+	 * 
 	 * @param string $joiningEntityClass Entity class that is joining.
 	 * @param string $joinType Type of the join.
 	 * @param string $joinBasePlace Place of the base joining. Can be a table (from FROM) or a previously created join.
@@ -91,16 +93,20 @@ abstract class Joiner
 	/**
 	 * Creates a join out of the specified values.
 	 * 
-	 * @param string $class
-	 * @param JoinType $joinType
-	 * @param string $joinBasePlace
-	 * @param string $joinBaseColumn
-	 * @param string $joinColumn
-	 * @param string $joinName
+	 * @param string $class Entity class that is joining.
+	 * @param JoinType $joinType Type of the join.
+	 * @param string $joinBasePlace Place of the base joining. Can be a table (from FROM) or a previously created join.
+	 * @param string $joinBaseColumn Column of the joinBasePlace on which the join shall be made.
+	 * @param string $joinColumn Column of the joining entity on which the join shall be made.
+	 * @param string [optional] $joinName
 	 * @return array
 	 */
-	public static function createJoin($class,$joinType,$joinBasePlace,$joinBaseColumn,$joinColumn,$joinName)
+	public static function createJoin($class,$joinType,$joinBasePlace,$joinBaseColumn,$joinColumn,$joinName=null)
 	{
+		if($joinName==null){
+			$joinName=self::getJoinName($class, $joinType, $joinBasePlace, $joinBaseColumn, $joinColumn);
+		}
+		
 		$theJoin=[];
 		$theJoin[$class]=self::createJoinArray($joinType, $joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 		
@@ -129,5 +135,39 @@ abstract class Joiner
 		$joinArray[$joinType]=$typeJoin;
 		
 		return $joinArray;
+	}
+	
+	/**
+	 * Converts the specified join to a query string.
+	 * 
+	 * @param array $theJoin
+	 * @return string
+	 */
+	public static function toQueryString($theJoin)
+	{
+		$queryJoins="";
+		
+		$isFirst=true;
+		foreach($theJoin as $joiningEntityClass => $arrayByJoiningEntityClass){
+			foreach($arrayByJoiningEntityClass as $joinType => $arrayByJoinType){
+				foreach($arrayByJoinType as $joinBasePlace => $arrayByJoinBasePlace){
+					foreach($arrayByJoinBasePlace as $joinBaseColumn => $arrayByJoinBaseColumn){
+						foreach($arrayByJoinBaseColumn as $joinColumn => $joinName){
+							$joinTable=$joiningEntityClass::getTableName();
+
+							if(!$isFirst){
+								$queryJoins.=" ";
+							} else{
+								$isFirst=false;
+							}
+
+							$queryJoins.="$joinType JOIN $joinTable AS $joinName ON $joinBasePlace.$joinBaseColumn=$joinName.$joinColumn";
+						}
+					}
+				}
+			}
+		}
+		
+		return $queryJoins;
 	}
 }
