@@ -884,7 +884,7 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 			$isFirst=true;
 		}
 		foreach($fields as $field){
-			if($type===QueryTypeEnum::INSERT && $fieldEntity->$field==null){
+			if($type===QueryTypeEnum::INSERT && $fieldEntity->$field===null){
 				continue;
 			}
 			
