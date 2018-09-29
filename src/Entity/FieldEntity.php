@@ -111,12 +111,16 @@ abstract class FieldEntity extends DatabaseTable implements IFieldEntity
 	private static function toArrayListInternal($entities,$fieldsToIgnore,$includeHiddenFields,&$session)
 	{
 		$elements=[];
-		foreach($entities as $entityKey => $entity){
-			if(is_array($entity)){
-				$elements[$entityKey]=self::toArrayListInternal($entity, $fieldsToIgnore, $includeHiddenFields, $session);
+		foreach($entities as $key => $value){
+			if(is_array($value)){
+				$elements[$key]=self::toArrayListInternal($value, $fieldsToIgnore, $includeHiddenFields, $session);
 			}else{
-				/* @var $entity FieldEntity */
-				$elements[$entityKey]=$entity->toArrayInternal($fieldsToIgnore,$includeHiddenFields, $session);
+				if(is_a($value, FieldEntity::class)){
+					/* @var $value FieldEntity */
+					$elements[$key]=$value->toArrayInternal($fieldsToIgnore,$includeHiddenFields, $session);
+				}else{
+					$elements[$key]=$value;
+				}
 			}
 		}
 		

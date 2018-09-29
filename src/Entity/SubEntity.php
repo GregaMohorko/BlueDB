@@ -37,10 +37,7 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 	{
 		$baseStrongEntity=$this->getBaseStrongEntity();
 		if($baseStrongEntity===null){
-			echo "<pre>";
-			var_dump($this);
-			echo "</pre>";
-			throw new \Exception("WTF");
+			throw new \Exception("Trying to get ID of a sub entity without parent.");
 		}
 		return $baseStrongEntity->ID;
 	}
