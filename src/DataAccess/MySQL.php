@@ -139,6 +139,22 @@ class MySQL
 	}
 	
 	/**
+	 * Will begin or commit when the provided values differ from each other.
+	 * 
+	 * @param bool $beginTransaction
+	 * @param bool $commit
+	 */
+	public static function beginOrCommitTransaction($beginTransaction,$commit)
+	{
+		if($beginTransaction===true && $commit!==true){
+			self::beginTransaction();
+		}
+		if($beginTransaction!==true && $commit===true){
+			self::commitTransaction();
+		}
+	}
+	
+	/**
 	 * Use this function when selecting multiple rows.
 	 * 
 	 * @param string $selectQuery

@@ -151,13 +151,13 @@ abstract class EntityUtility
 	}
 	
 	/**
-	 * Loads the specified field of the provided entity and returns it. This function does not modify the provided entity. Field type must either be ONE_TO_MANY or MANY_TO_MANY.
+	 * Loads the specified field of the provided entity and returns it. This function does not modify the provided entity.
 	 * 
 	 * @param FieldEntity $entity
-	 * @param string $field Must either be ONE_TO_MANY or MANY_TO_MANY.
-	 * @param array $fieldsToLoad [optional] Specifies which fields to load.
-	 * @param array $fieldsToIgnore [optional]
-	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions.
+	 * @param string $field
+	 * @param array $fieldsToLoad [optional] Specifies which fields to load. Only for ONE_TO_MANY or MANY_TO_MANY fields.
+	 * @param array $fieldsToIgnore [optional] Specifies which fields to ignore. Only for ONE_TO_MANY or MANY_TO_MANY fields.
+	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions. Only for ONE_TO_MANY or MANY_TO_MANY fields.
 	 * @return array
 	 */
 	public static function loadFieldOf($entity,$field,$fieldsToLoad=null,$fieldsToIgnore=null,$additionalExpressions=null)
@@ -168,13 +168,13 @@ abstract class EntityUtility
 	}
 	
 	/**
-	 * Loads the specified field of the provided entity and returns it. Use this function when you expect to get only one result. This function does not modify the provided entity. Field type must be ONE_TO_MANY.
+	 * Loads the specified field of the provided entity and returns it. Use this function when you expect to get only one result. This function does not modify the provided entity. Field type must not be MANY_TO_MANY.
 	 * 
 	 * @param FieldEntity $entity
-	 * @param string $field Must be ONE_TO_MANY.
-	 * @param array $fieldsToLoad [optional] Specifies which fields to load.
-	 * @param array $fieldsToIgnore [optional]
-	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions.
+	 * @param string $field Must not be MANY_TO_MANY.
+	 * @param array $fieldsToLoad [optional] Specifies which fields to load. Only for ONE_TO_MANY fields.
+	 * @param array $fieldsToIgnore [optional] Specifies which fields to ignore. Only for ONE_TO_MANY fields.
+	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions. Only for ONE_TO_MANY fields.
 	 * @return FieldEntity
 	 */
 	public static function loadFieldOfSingle($entity,$field,$fieldsToLoad=null,$fieldsToIgnore=null,$additionalExpressions=null)
@@ -185,13 +185,13 @@ abstract class EntityUtility
 	}
 	
 	/**
-	 * Loads the specified field of the provided entity. Field type must either be ONE_TO_MANY or MANY_TO_MANY.
+	 * Loads the specified field of the provided entity.
 	 * 
 	 * @param FieldEntity $entity
-	 * @param string $field Must either be ONE_TO_MANY or MANY_TO_MANY.
-	 * @param array $fieldsToLoad [optional] Specifies which fields to load.
-	 * @param array $fieldsToIgnore [optional]
-	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions.
+	 * @param string $field
+	 * @param array $fieldsToLoad [optional] Specifies which fields to load. Only for ONE_TO_MANY or MANY_TO_MANY fields.
+	 * @param array $fieldsToIgnore [optional] Specifies which fields to ignore. Only for ONE_TO_MANY or MANY_TO_MANY fields.
+	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions. Only for ONE_TO_MANY or MANY_TO_MANY fields.
 	 */
 	public static function loadField($entity,$field,$fieldsToLoad=null,$fieldsToIgnore=null,$additionalExpressions=null)
 	{
@@ -199,13 +199,13 @@ abstract class EntityUtility
 	}
 	
 	/**
-	 * Loads the specified field of the provided entity. Use this function when you expect to get only one result. Field type must be ONE_TO_MANY.
+	 * Loads the specified field of the provided entity. Use this function when you expect to get only one result. Field type must not be MANY_TO_MANY.
 	 * 
 	 * @param FieldEntity $entity
-	 * @param string $field Must be ONE_TO_MANY.
-	 * @param array $fieldsToLoad [optional] Specifies which fields to load.
-	 * @param array $fieldsToIgnore [optional]
-	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions.
+	 * @param string $field Must not be MANY_TO_MANY.
+	 * @param array $fieldsToLoad [optional] Specifies which fields to load. Only for ONE_TO_MANY fields.
+	 * @param array $fieldsToIgnore [optional] Specifies which fields to ignore. Only for ONE_TO_MANY fields.
+	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions. Only for ONE_TO_MANY fields.
 	 */
 	public static function loadFieldSingle($entity,$field,$fieldsToLoad=null,$fieldsToIgnore=null,$additionalExpressions=null)
 	{
@@ -213,13 +213,13 @@ abstract class EntityUtility
 	}
 	
 	/**
-	 * Loads the specified field of the provided entity. Field type must either be ONE_TO_MANY or MANY_TO_MANY.
+	 * Loads the specified field of the provided entity.
 	 * 
 	 * @param FieldEntity $entity
-	 * @param string $field Must either be ONE_TO_MANY or MANY_TO_MANY.
-	 * @param array $fieldsToLoad [optional] Specifies which fields to load.
-	 * @param array $fieldsToIgnore [optional]
-	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions.
+	 * @param string $field
+	 * @param array $fieldsToLoad [optional] Specifies which fields to load. Only for ONE_TO_MANY or MANY_TO_MANY fields.
+	 * @param array $fieldsToIgnore [optional] Specifies which fields to ignore. Only for ONE_TO_MANY or MANY_TO_MANY fields.
+	 * @param array $additionalExpressions [optional] Any additional expressions to filter the loaded entities. Can be a single expression or a list of expressions. Only for ONE_TO_MANY or MANY_TO_MANY fields.
 	 * @param bool $expectsSingle
 	 */
 	private static function loadFieldInternal($entity,$field,$fieldsToLoad,$fieldsToIgnore,$additionalExpressions,$expectsSingle)
@@ -228,6 +228,20 @@ abstract class EntityUtility
 		$fieldBaseConstName="$entityClass::$field";
 		$fieldType=constant($fieldBaseConstName."FieldType");
 		switch($fieldType){
+			case FieldTypeEnum::PROPERTY:
+			case FieldTypeEnum::MANY_TO_ONE:
+				if($additionalExpressions!==null){
+					throw new Exception("Additional expressions are not allowed for PROPERTY or MANY_TO_ONE field type.");
+				}
+				if($fieldsToLoad!==null){
+					throw new Exception("Fields to load are not allowed for PROPERTY or MANY_TO_ONE field type.");
+				}
+				if($fieldsToIgnore!==null){
+					throw new Exception("Fields to ignore are not allowed for PROPERTY or MANY_TO_ONE field type.");
+				}
+				$entityWithLoadedField=$entityClass::loadByID($entity->getID(),[$field]);
+				$loadedField=$entityWithLoadedField->$field;
+				break;
 			case FieldTypeEnum::ONE_TO_MANY:
 				$fieldClass=constant($fieldBaseConstName."Class");
 				$fieldIdentifier=constant($fieldBaseConstName."Identifier");
@@ -276,7 +290,7 @@ abstract class EntityUtility
 		$entityClass= get_class($entity);
 		
 		/* @var $entityWithLoadedFields FieldEntity */
-		$entityWithLoadedFields=$entityClass::loadByID($entity->getID(),$fields);
+		$entityWithLoadedFields=$entityClass::loadByID($entity->getID(),$fields,null,true,true,true);
 		
 		foreach($fields as $field){
 			$entity->$field=$entityWithLoadedFields->$field;
