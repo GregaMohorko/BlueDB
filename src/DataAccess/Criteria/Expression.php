@@ -831,6 +831,57 @@ class Expression
 	}
 	
 	/**
+	 * Only property field types are allowed.
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
+	 * @param mixed $value Can be null.
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is SubEntity) that contains the specified field.
+	 * @return Expression
+	 */
+	public static function unequal($criteriaClass,$field,$value,$parentClass=null)
+	{
+		if($value===null){
+			return self::isNotNull($criteriaClass, $field, $parentClass);
+		}
+		
+		if($parentClass===null){
+			$parentClass=$criteriaClass;
+		}
+		$joiningFieldBaseConstName=$parentClass.'::'.$field;
+		
+		/* @var $type FieldTypeEnum */
+		$type=constant($joiningFieldBaseConstName.'FieldType');
+		switch($type){
+			case FieldTypeEnum::PROPERTY:
+				$column=constant($joiningFieldBaseConstName."Column");
+				if($criteriaClass===$parentClass){
+					// base class does not need an inner join
+					$termName=$parentClass::getTableName();
+					$theJoin=null;
+				}else{
+					$joinBasePlace=$criteriaClass::getTableName();
+					$joinBaseColumn=$criteriaClass::getIDColumn();
+					$joinColumn=$parentClass::getIDColumn();
+					
+					$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+					$termName=$joinName;
+					$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+				}
+				$term=$termName.'.'.$column.'<>?';
+				$propertyType=constant($joiningFieldBaseConstName.'PropertyType');
+				$valueAsString=PropertyTypeEnum::convertToString($value, $propertyType);
+				$valueType=PropertyTypeEnum::getPreparedStmtType($propertyType);
+				$values=[$valueAsString];
+				$valueTypes=[$valueType];
+				
+				return new Expression($parentClass,$theJoin,$term,$values,$valueTypes);
+			default:
+				throw new Exception('Only property type field is allowed for unequal expression. The provided field is of type "'.$type.'".');
+		}
+	}
+	
+	/**
 	 * Puts an OR between all of the provided expressions.
 	 * All expressions must have the same entity class.
 	 * 
