@@ -50,6 +50,14 @@ class Criteria
 	 * @var array Parameters for the prepared statement binding.
 	 */
 	public $PreparedParameters;
+	/**
+	 * @var array A list of [field, bool] tuples, where the second item determines whether the order should be ascending.
+	 */
+	public $OrderingFields;
+	/**
+	 * @var array The [int, int] array representing the LIMIT clause, where the first item is the offset and the second is the count.
+	 */
+	public $Limit;
 	
 	/**
 	 * @param string $baseEntityClass
@@ -71,6 +79,84 @@ class Criteria
 		}
 		
 		$this->expressions[]=$expression;
+	}
+	
+	/**
+	 * @param string $field The field on which to order ascendingly.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function orderBy($field)
+	{
+		if($this->OrderingFields!==null){
+			throw new Exception('The orderBy has already been called. Call thenBy instead.');
+		}
+		$this->OrderingFields=[];
+		$this->addOrdering($field, true);
+		return $this;
+	}
+	
+	/**
+	 * @param string $field The field on which to order descendingly.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function orderByDescending($field)
+	{
+		if($this->OrderingFields!==null){
+			throw new Exception('The orderBy has already been called. Call thenByDescending instead.');
+		}
+		$this->OrderingFields=[];
+		$this->addOrdering($field, false);
+		return $this;
+	}
+	
+	/**
+	 * @param string $field The field on which to order ascendingly.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function thenBy($field)
+	{
+		if($this->OrderingFields===null){
+			throw new Exception('The orderBy has not yet been called. Call orderBy instead.');
+		}
+		$this->addOrdering($field, true);
+		return $this;
+	}
+	
+	/**
+	 * @param string $field The field on which to order descendingly.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function thenByDescending($field)
+	{
+		if($this->OrderingFields===null){
+			throw new Exception('The orderBy has not yet been called. Call orderByDescending instead.');
+		}
+		$this->addOrdering($field, false);
+		return $this;
+	}
+	
+	/**
+	 * @param string $field
+	 * @param bool $ascending
+	 */
+	private function addOrdering($field,$ascending)
+	{
+		if($field===null){
+			throw new Exception('Field for order by must not be null.');
+		}
+		$this->OrderingFields[]=[$field,$ascending];
+	}
+	
+	/**
+	 * @param int $count Specifies the maximum number of rows to be returned.
+	 * @param int $offset Specifies the offset of the first row to be returned.
+	 */
+	public function limit($count, $offset=0)
+	{
+		if($this->Limit!==null){
+			throw new Exception('Limit was already set.');
+		}
+		$this->Limit=[$offset,$count];
 	}
 	
 	public function prepare()

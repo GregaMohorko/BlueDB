@@ -177,11 +177,34 @@ abstract class DatabaseTable implements IDatabaseTable
 			$criteria->prepare();
 			// joins
 			if(!empty($criteria->PreparedQueryJoins)){
-				$query.=" ".$criteria->PreparedQueryJoins;
+				$query.=' '.$criteria->PreparedQueryJoins;
 			}
 			// conditions
 			if(!empty($criteria->PreparedQueryRestrictions)){
-				$query.=" WHERE ".$criteria->PreparedQueryRestrictions;
+				$query.=' WHERE '.$criteria->PreparedQueryRestrictions;
+			}
+			// ordering
+			if($criteria->OrderingFields!==null){
+				$query.=' ORDER BY ';
+				$count=count($criteria->OrderingFields);
+				for($i=0;$i<$count;++$i){
+					$orderingField=$criteria->OrderingFields[$i];
+					if($i>0){
+						$query.=', ';
+					}
+					$query.=$orderingField[0].' '.($orderingField[1]?'ASC':'DESC');
+				}
+			}
+			// limit
+			if($criteria->Limit!==null){
+				$query.=' LIMIT ';
+				$offset=$criteria->Limit[0];
+				$count=$criteria->Limit[1];
+				if($offset===0){
+					$query.=$count;
+				}else{
+					$query.=$offset.', '.$count;
+				}
 			}
 		}
 		
