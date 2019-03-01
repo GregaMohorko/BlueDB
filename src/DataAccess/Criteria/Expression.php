@@ -504,8 +504,11 @@ class Expression
 		}
 		$joiningFieldBaseConstName=$parentClass."::".$field;
 		
+		/*@var $type FieldTypeEnum*/
+		$type=constant($joiningFieldBaseConstName."FieldType");
+		
 		if($value===null){
-			// if comparing for null, its always the same, no matter the type of the field
+			// if comparing for null, its always the same, no matter the type of the field (except for bool, where null is the equivalent for false)
 			$column=constant($joiningFieldBaseConstName."Column");
 			if($criteriaClass===$parentClass){
 				// base class does not need a join
@@ -518,15 +521,19 @@ class Expression
 
 				$joinName=Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
 				$termName=$joinName;
-				$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+				$theJoin=Joiner::createJoin($parentClass, JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 			}
 			$term=$termName.".".$column." IS NULL";
-			
+			if($type === FieldTypeEnum::PROPERTY){
+				$propertyType=constant($joiningFieldBaseConstName."PropertyType");
+				if($propertyType === PropertyTypeEnum::BOOL){
+					// for bool, null is the equivalent for false and vice versa
+					$term.=' OR '.$termName.'.'.$column.' = 0';
+				}
+			}
 			return new Expression($parentClass,$theJoin,$term);
 		}
 		
-		/*@var $type FieldTypeEnum*/
-		$type=constant($joiningFieldBaseConstName."FieldType");
 		switch($type){
 			case FieldTypeEnum::PROPERTY:
 				$column=constant($joiningFieldBaseConstName."Column");
@@ -543,12 +550,24 @@ class Expression
 					$termName=$joinName;
 					$theJoin=Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
 				}
-				$term=$termName.".".$column."=?";
 				$propertyType=constant($joiningFieldBaseConstName."PropertyType");
-				$valueAsString=PropertyTypeEnum::convertToString($value, $propertyType);
-				$valueType=PropertyTypeEnum::getPreparedStmtType($propertyType);
-				$values=[$valueAsString];
-				$valueTypes=[$valueType];
+				if($propertyType === PropertyTypeEnum::BOOL){
+					if($value===true){
+						$term=$termName.'.'.$column.'=1';
+					}else if($value===false){
+						$term=$termName.'.'.$column.'=0 OR '.$termName.'.'.$column.' IS NULL';
+					}else{
+						throw new Exception('Wrong type of value for a bool property.');
+					}
+					$values=null;
+					$valueTypes=null;
+				}else{
+					$term=$termName.".".$column."=?";
+					$valueAsString=PropertyTypeEnum::convertToString($value, $propertyType);
+					$valueType=PropertyTypeEnum::getPreparedStmtType($propertyType);
+					$values=[$valueAsString];
+					$valueTypes=[$valueType];
+				}
 				
 				return new Expression($parentClass,$theJoin,$term,$values,$valueTypes);
 			case FieldTypeEnum::MANY_TO_ONE:
