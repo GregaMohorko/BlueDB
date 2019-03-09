@@ -26,7 +26,10 @@ namespace BlueDB\Entity;
 
 use BlueDB\DataAccess\Criteria\Criteria;
 use BlueDB\DataAccess\Criteria\Expression;
+use BlueDB\DataAccess\MySQL;
 use BlueDB\DataAccess\Session;
+use BlueDB\Utility\ArrayUtility;
+use Exception;
 
 abstract class SubEntity extends FieldEntity implements ISubEntity
 {
@@ -37,7 +40,7 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 	{
 		$baseStrongEntity=$this->getBaseStrongEntity();
 		if($baseStrongEntity===null){
-			throw new \Exception("Trying to get ID of a sub entity without parent.");
+			throw new Exception("Trying to get ID of a sub entity without parent.");
 		}
 		return $baseStrongEntity->ID;
 	}
@@ -184,6 +187,10 @@ abstract class SubEntity extends FieldEntity implements ISubEntity
 		$loadedArray=self::executeSelectSingleQuery($query, $criteria);
 		if($loadedArray===null){
 			return null;
+		}
+		if(count($loadedArray)===1 && is_array(ArrayUtility::first($loadedArray))){
+			// this happens on rare cases... I don't know why
+			$loadedArray=ArrayUtility::first($loadedArray);
 		}
 		
 		$parentClass=$childClassName::getParentEntityClass();

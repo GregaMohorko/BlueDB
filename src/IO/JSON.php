@@ -31,6 +31,8 @@ use BlueDB\Entity\FieldEntity;
  */
 abstract class JSON
 {
+	const NULL='null';
+	
 	/**
 	 * Encodes provided field entities to a JSON string.
 	 * 
@@ -42,6 +44,9 @@ abstract class JSON
 	 */
 	public static function encode($entities,$fieldsToIgnore=null,$includeHiddenFields=false)
 	{
+		if($entities===null){
+			return self::NULL;
+		}
 		if(!is_array($entities)){
 			// is a single entity
 			/* @var $entities FieldEntity */
@@ -60,6 +65,9 @@ abstract class JSON
 	 */
 	public static function toArray($entities,$fieldsToIgnore=null, $includeHiddenFields=false)
 	{
+		if($entities===null){
+			return null;
+		}
 		if(!is_array($entities)){
 			// is a single entity
 			/* @var $fieldsToIgnore FieldEntity */

@@ -27,6 +27,18 @@ namespace BlueDB\Utility;
 abstract class ArrayUtility
 {
 	/**
+	 * Returns the first value from this array.
+	 * This method can be useful when keys of the array are not integers.
+	 * 
+	 * @param array $array
+	 * @return mixed
+	 */
+	public static function first($array)
+	{
+		return array_values($array)[0];
+	}
+	
+	/**
 	 * Merge two arrays.
 	 * 
 	 * @param array $array1 Initial array to merge.
