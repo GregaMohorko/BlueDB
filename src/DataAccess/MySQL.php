@@ -321,6 +321,13 @@ class MySQL
 		
 		// execute
 		if(!$stmt->execute()){
+			if($stmt->errno==1615){
+				// prepared statement needs to be re-prepared
+				// this mostly occurs when running heavy mysql backups/dumps at night
+				// wait 50 milliseconds and try again
+				usleep(50000);
+				return self::prepareAndExecuteStatement($sqlPreparedStatement, $parameters);
+			}
 			throw new Exception("Error while executing prepared statement '".$sqlPreparedStatement."': [".$stmt->errno."] ".$stmt->error,$stmt->errno);
 		}
 		

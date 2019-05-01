@@ -70,7 +70,7 @@ abstract class JSON
 		}
 		if(!is_array($entities)){
 			// is a single entity
-			/* @var $fieldsToIgnore FieldEntity */
+			/* @var $entities FieldEntity */
 			return $entities->toArray($fieldsToIgnore,$includeHiddenFields);
 		}
 		return FieldEntity::toArrayList($entities, $fieldsToIgnore,$includeHiddenFields);
