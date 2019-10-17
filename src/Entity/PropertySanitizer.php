@@ -24,9 +24,10 @@
 
 namespace BlueDB\Entity;
 
-use Exception;
-use DateTime;
 use BlueDB\DataAccess\MySQL;
+use BlueDB\Utility\StringUtility;
+use DateTime;
+use Exception;
 
 /**
  * Sanitizes raw string values of properties received from the client and creates actual objects.
@@ -180,7 +181,8 @@ abstract class PropertySanitizer
 		if(strlen($escapedValue)==0){
 			return $escapedValue;
 		}
-		$emailValue=filter_var($escapedValue,FILTER_VALIDATE_EMAIL);
+		$normalEscapedValue= StringUtility::replaceSlavicCharsToNormalEquivalents($escapedValue);
+		$emailValue=filter_var($normalEscapedValue, FILTER_VALIDATE_EMAIL);
 		if($emailValue===false){
 			throw new Exception("Email filter failed for '$escapedValue'.");
 		}
