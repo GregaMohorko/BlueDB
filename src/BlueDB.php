@@ -3,7 +3,7 @@
 /* 
  * BlueDB.php
  * 
- * Copyright 2019 Grega Mohorko
+ * Copyright 2020 Gregor Mohorko
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
  * 
  * Bootstrap file for BlueDB library.
  * 
- * Version 1.2.9.1
+ * Version 1.3.0.0
  * 
  * @project BlueDB
- * @author Grega Mohorko <grega@mohorko.info>
+ * @author Gregor Mohorko <grega@mohorko.info>
  * @copyright Mar 14, 2017 Grega Mohorko
  */
 
@@ -39,6 +39,7 @@ require_once BLUEDB_DIR.'Configuration/BlueDBProperties.php';
 \BlueDB\Configuration\BlueDBProperties::init($config);
 
 // include all files
+require_once BLUEDB_DIR.'DataAccess/Criteria/OrderByMultipleFieldOperator.php';
 require_once BLUEDB_DIR.'DataAccess/Criteria/Expression.php';
 require_once BLUEDB_DIR.'DataAccess/Criteria/Criteria.php';
 require_once BLUEDB_DIR.'DataAccess/JoinType.php';

@@ -51,7 +51,7 @@ class Criteria
 	 */
 	public $PreparedParameters;
 	/**
-	 * @var array A list of [field, bool] tuples, where the second item determines whether the order should be ascending.
+	 * @var array A list of [field, bool] tuples, where the second item determines whether the order should be ascending OR [OrderByMultipleFieldOperator, fields[], bool].
 	 */
 	public $OrderingFields;
 	/**
@@ -96,6 +96,23 @@ class Criteria
 	}
 	
 	/**
+	 * Creates a ORDER BY (field1 OPERATOR field2 OPERATOR field3 ...).
+	 * 
+	 * @param OrderByMultipleFieldOperator $multipleFieldOperator The operator that will be put between all the fields.
+	 * @param string[] $fields The fields.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function orderByMultipleFields($multipleFieldOperator, $fields)
+	{
+		if($this->OrderingFields!==null){
+			throw new Exception('The orderBy has already been called. Call thenBy instead.');
+		}
+		$this->OrderingFields=[];
+		$this->addOrderingMultipleFields($multipleFieldOperator, $fields, true);
+		return $this;
+	}
+	
+	/**
 	 * @param string $field The field on which to order descendingly.
 	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
 	 */
@@ -106,6 +123,23 @@ class Criteria
 		}
 		$this->OrderingFields=[];
 		$this->addOrdering($field, false);
+		return $this;
+	}
+	
+	/**
+	 * Creates a ORDER BY (field1 OPERATOR field2 OPERATOR field3 ...) DESC.
+	 * 
+	 * @param OrderByMultipleFieldOperator $multipleFieldOperator The operator that will be put between all the fields.
+	 * @param string[] $fields The fields.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function orderByMultipleFieldsDescending($multipleFieldOperator, $fields)
+	{
+		if($this->OrderingFields!==null){
+			throw new Exception('The orderBy has already been called. Call thenByDescending instead.');
+		}
+		$this->OrderingFields=[];
+		$this->addOrderingMultipleFields($multipleFieldOperator, $fields, false);
 		return $this;
 	}
 	
@@ -123,6 +157,22 @@ class Criteria
 	}
 	
 	/**
+	 * Creates a (field1 OPERATOR field2 OPERATOR field3 ...).
+	 * 
+	 * @param OrderByMultipleFieldOperator $multipleFieldOperator The operator that will be put between all the fields.
+	 * @param string[] $fields The fields.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function thenByMultipleFields($multipleFieldOperator, $fields)
+	{
+		if($this->OrderingFields===null){
+			throw new Exception('The orderBy has not yet been called. Call orderBy instead.');
+		}
+		$this->addOrderingMultipleFields($multipleFieldOperator, $fields, true);
+		return $this;
+	}
+	
+	/**
 	 * @param string $field The field on which to order descendingly.
 	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
 	 */
@@ -136,6 +186,22 @@ class Criteria
 	}
 	
 	/**
+	 * Creates a (field1 OPERATOR field2 OPERATOR field3 ...) DESC.
+	 * 
+	 * @param OrderByMultipleFieldOperator $multipleFieldOperator The operator that will be put between all the fields.
+	 * @param string[] $fields The fields.
+	 * @return Criteria The same criteria, so that you can chain orderBy and thenBy clauses.
+	 */
+	public function thenByMultipleFieldsDescending($multipleFieldOperator, $fields)
+	{
+		if($this->OrderingFields===null){
+			throw new Exception('The orderBy has not yet been called. Call orderByDescending instead.');
+		}
+		$this->addOrderingMultipleFields($multipleFieldOperator, $fields, false);
+		return $this;
+	}
+	
+	/**
 	 * @param string $field
 	 * @param bool $ascending
 	 */
@@ -145,6 +211,26 @@ class Criteria
 			throw new Exception('Field for order by must not be null.');
 		}
 		$this->OrderingFields[]=[$field,$ascending];
+	}
+	
+	/**
+	 * @param OrderByMultipleFieldOperator $multipleFieldOperator
+	 * @param string[] $fields
+	 * @param bool $ascending
+	 */
+	private function addOrderingMultipleFields($multipleFieldOperator, $fields, $ascending)
+	{
+		switch($multipleFieldOperator){
+			case OrderByMultipleFieldOperator::ANDD:
+			case OrderByMultipleFieldOperator::ORR:
+				break;
+			default:
+				throw new Exception('Unsupported multiple field operator: "'.$multipleFieldOperator.'".');
+		}
+		if($fields === null || empty($fields)){
+			throw new Exception('The count of fields for order by multiple fields must not be empty or null.');
+		}
+		$this->OrderingFields[]=[$multipleFieldOperator, $fields, $ascending];
 	}
 	
 	/**

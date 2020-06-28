@@ -34,6 +34,19 @@ use BlueDB\DataAccess\Criteria\Expression;
 abstract class DatabaseTable implements IDatabaseTable
 {
 	/**
+	 * Returns the number of rows in this database table.
+	 * 
+	 * @return int The number of rows in this database table.
+	 */
+	public static function loadRowCount()
+	{
+		$query = 'select count(*) from '.self::getTableName().';';
+		$result = MySQL::selectSingle($query);
+		var_dump($result);
+		die();
+	}
+	
+	/**
 	 * Checks if values are set or if they have to be set to default values as specified in the configuration file.
 	 * 
 	 * @param bool $inclOneToMany
@@ -192,7 +205,29 @@ abstract class DatabaseTable implements IDatabaseTable
 					if($i>0){
 						$query.=', ';
 					}
-					$query.=$orderingField[0].' '.($orderingField[1]?'ASC':'DESC');
+					switch(count($orderingField)){
+						case 2:
+							$fieldToOrderBy = constant("$classToLoad::$orderingField[0]Column");
+							$ascending=$orderingField[1];
+							break;
+						case 3:
+							$orderByOperator=$orderingField[0];
+							$fieldsToOrderBy=$orderingField[1];
+							$ascending=$orderingField[2];
+							$fieldToOrderBy='('.constant("$classToLoad::$fieldsToOrderBy[0]Column");
+							$countJ=count($fieldsToOrderBy);
+							for($j=1;$j<$countJ;++$j){
+								$fieldToOrderBy.=" $orderByOperator ".constant("$classToLoad::$fieldsToOrderBy[$j]Column");
+							}
+							$fieldToOrderBy.=')';
+							break;
+						default:
+							throw new Exception('Invalid ordering field in criteria.');
+					}
+					$query.=$fieldToOrderBy;
+					if(!$ascending){
+						$query.=' DESC';
+					}
 				}
 			}
 			// limit

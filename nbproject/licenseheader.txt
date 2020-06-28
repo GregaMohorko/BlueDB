@@ -3,7 +3,7 @@ ${licenseFirst}
 </#if>
 ${licensePrefix}${nameAndExt}
 ${licensePrefix}
-${licensePrefix}Copyright ${date?date?string("yyyy")} Grega Mohorko
+${licensePrefix}Copyright ${date?date?string("yyyy")} Gregor Mohorko
 ${licensePrefix}
 ${licensePrefix}Licensed under the Apache License, Version 2.0 (the "License");
 ${licensePrefix}you may not use this file except in compliance with the License.

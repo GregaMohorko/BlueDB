@@ -1,9 +1,9 @@
 <?php
 
 /*
- * IDatabaseTable.php
+ * OrderByMultipleFieldOperator.php
  * 
- * Copyright 2018 Grega Mohorko
+ * Copyright 2020 Gregor Mohorko
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,14 @@
  * limitations under the License.
  * 
  * @project BlueDB
- * @author Grega Mohorko <grega@mohorko.info>
- * @copyright Mar 14, 2017 Grega Mohorko
+ * @author Gregor Mohorko <grega@mohorko.info>
+ * @copyright Jun 17, 2020 Gregor Mohorko
  */
 
-namespace BlueDB\Entity;
+namespace BlueDB\DataAccess\Criteria;
 
-interface IDatabaseTable
+abstract class OrderByMultipleFieldOperator
 {
-	/**
-	 * @return string
-	 */
-	static function getTableName();
-	
-	/**
-	 * @return int The number of rows in this database table.
-	 */
-	static function loadRowCount();
+	const ANDD='AND';
+	const ORR='OR';
 }

@@ -92,6 +92,8 @@ class MySQL
 	/**
 	 * Escapes special characters in a string for use in an SQL statement, taking into account the current charset of the connection.
 	 * 
+	 * DO NOT use this when using prepared statements.
+	 * 
 	 * This function calls real_escape_string of mysqli.
 	 * 
 	 * @param type $string The string to be escaped. Characters encoded are NUL (ASCII 0), \n, \r, \, ', ", and Control-Z.
@@ -167,6 +169,7 @@ class MySQL
 	{
 		$instance=self::instance();
 		
+		/** @var mysqli_result $result */
 		$result=$instance->Source->query($selectQuery,$resultMode);
 		if(!$result){
 			throw new Exception("Error while executing select query '".$selectQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);
@@ -189,6 +192,7 @@ class MySQL
 	{
 		$instance=self::instance();
 		
+		/** @var mysqli_result $result */
 		$result=$instance->Source->query($selectQuery, $resultMode);
 		if(!$result){
 			throw new Exception("Error while executing select query '".$selectQuery."': [".$instance->Source->errno."] ".$instance->Source->error,$instance->Source->errno);

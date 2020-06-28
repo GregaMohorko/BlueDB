@@ -24,7 +24,6 @@
 
 namespace BlueDB\Entity;
 
-use BlueDB\DataAccess\MySQL;
 use BlueDB\Utility\StringUtility;
 use DateTime;
 use Exception;
@@ -48,83 +47,72 @@ abstract class PropertySanitizer
 			return PropertyCreator::create($value, $type);
 		}
 		
-		$escapedValue=MySQL::escapeString($value);
+		// everything is automatically escaped when using prepared statements
+		// if not using prepared statements, then the user should escape himself
+		//$escapedValue=MySQL::escapeString($value);
 		
 		switch($type){
 			case PropertyTypeEnum::TEXT:
-				return self::sanitizeText($escapedValue);
+				return $value;
 			case PropertyTypeEnum::INT:
-				return self::sanitizeInt($escapedValue);
+				return self::sanitizeInt($value);
 			case PropertyTypeEnum::FLOAT:
-				return self::sanitizeFloat($escapedValue);
+				return self::sanitizeFloat($value);
 			case PropertyTypeEnum::ENUM:
-				return self::sanitizeEnum($escapedValue);
+				return self::sanitizeEnum($value);
 			case PropertyTypeEnum::BOOL:
-				return self::sanitizeBool($escapedValue);
+				return self::sanitizeBool($value);
 			case PropertyTypeEnum::DATE:
-				return self::sanitizeDate($escapedValue);
+				return self::sanitizeDate($value);
 			case PropertyTypeEnum::TIME:
-				return self::sanitizeTime($escapedValue);
+				return self::sanitizeTime($value);
 			case PropertyTypeEnum::DATETIME:
-				return self::sanitizeDatetime($escapedValue);
+				return self::sanitizeDatetime($value);
 			case PropertyTypeEnum::EMAIL:
-				return self::sanitizeEmail($escapedValue);
+				return self::sanitizeEmail($value);
 			case PropertyTypeEnum::COLOR:
-				return self::sanitizeColor($escapedValue);
+				return self::sanitizeColor($value);
 			default:
 				throw new Exception("The provided PropertyTypeEnum '".$type."' is not supported.");
 		}
 	}
 	
 	/**
-	 * @param string $escapedValue
-	 * @return string
-	 */
-	private static function sanitizeText($escapedValue)
-	{
-		$textValue=filter_var($escapedValue,FILTER_SANITIZE_STRING);
-		if($textValue===false){
-			throw new Exception("String filter failed for '$escapedValue'.");
-		}
-		return $textValue;
-	}
-	
-	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return int
 	 */
-	private static function sanitizeInt($escapedValue)
+	private static function sanitizeInt($value)
 	{
-		$filteredValue=filter_var($escapedValue, FILTER_VALIDATE_INT);
+		$filteredValue=filter_var($value, FILTER_VALIDATE_INT);
 		if($filteredValue===false){
-			throw new Exception("Int filter failed for '$escapedValue'.");
+			throw new Exception("Int filter failed for '$value'.");
 		}
 		return PropertyCreator::createInt($filteredValue);
 	}
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return float
 	 */
-	private static function sanitizeFloat($escapedValue)
+	private static function sanitizeFloat($value)
 	{
-		$valueWithoutCommas=str_replace(",", ".", $escapedValue);
+		$valueWithoutCommas=str_replace(",", ".", $value);
 		$filteredValue=filter_var($valueWithoutCommas, FILTER_VALIDATE_FLOAT);
 		if($filteredValue===false){
-			throw new Exception("Float filter failed for '$escapedValue'.");
+			throw new Exception("Float filter failed for '$value'.");
 		}
 		return PropertyCreator::createFloat($filteredValue);
 	}
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return int
 	 */
-	private static function sanitizeEnum($escapedValue)
+	private static function sanitizeEnum($value)
 	{
-		$filteredValue=filter_var($escapedValue,FILTER_VALIDATE_INT);
+		$filteredValue=filter_var($value,FILTER_VALIDATE_INT);
 		if($filteredValue===false){
-			throw new Exception("Int filter failed for '$escapedValue'.");
+			throw new Exception("Int filter failed for '$value'.");
 		}
 		return PropertyCreator::createEnum($filteredValue);
 	}
@@ -132,74 +120,74 @@ abstract class PropertySanitizer
 	private static $boolFilterOptions=array("options" => array("min_range"=>0,"max_range"=>1));
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return bool
 	 */
-	private static function sanitizeBool($escapedValue)
+	private static function sanitizeBool($value)
 	{
-		$filteredValue=filter_var($escapedValue, FILTER_VALIDATE_INT,self::$boolFilterOptions);
+		$filteredValue=filter_var($value, FILTER_VALIDATE_INT,self::$boolFilterOptions);
 		if($filteredValue===false){
-			throw new Exception("Bool filter failed for '$escapedValue'.");
+			throw new Exception("Bool filter failed for '$value'.");
 		}
 		return PropertyCreator::createBool($filteredValue);
 	}
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return DateTime
 	 */
-	private static function sanitizeDate($escapedValue)
+	private static function sanitizeDate($value)
 	{
-		$shortenedValue=substr($escapedValue, 0, 10);
+		$shortenedValue=substr($value, 0, 10);
 		return PropertyCreator::createDate($shortenedValue);
 	}
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return DateTime
 	 */
-	private static function sanitizeTime($escapedValue)
+	private static function sanitizeTime($value)
 	{
-		return PropertyCreator::createTime($escapedValue);
+		return PropertyCreator::createTime($value);
 	}
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return DateTime
 	 */
-	private static function sanitizeDatetime($escapedValue)
+	private static function sanitizeDatetime($value)
 	{
-		return PropertyCreator::createDateTime($escapedValue);
+		return PropertyCreator::createDateTime($value);
 	}
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return string
 	 */
-	private static function sanitizeEmail($escapedValue)
+	private static function sanitizeEmail($value)
 	{
-		if(strlen($escapedValue)==0){
-			return $escapedValue;
+		if(strlen($value)==0){
+			return $value;
 		}
-		$normalEscapedValue= StringUtility::replaceSlavicCharsToNormalEquivalents($escapedValue);
+		$normalEscapedValue= StringUtility::replaceSlavicCharsToNormalEquivalents($value);
 		$emailValue=filter_var($normalEscapedValue, FILTER_VALIDATE_EMAIL);
 		if($emailValue===false){
-			throw new Exception("Email filter failed for '$escapedValue'.");
+			throw new Exception("Email filter failed for '$value'.");
 		}
 		return $emailValue;
 	}
 	
 	/**
-	 * @param string $escapedValue
+	 * @param string $value
 	 * @return string
 	 */
-	private static function sanitizeColor($escapedValue)
+	private static function sanitizeColor($value)
 	{
-		if(strlen($escapedValue)!=6){
-			throw new Exception("Value '$escapedValue' is not a valid color.");
+		if(strlen($value)!=6){
+			throw new Exception("Value '$value' is not a valid color.");
 		}
 		
-		$upperValue=strtoupper($escapedValue);
+		$upperValue=strtoupper($value);
 		
 		for($i=5;$i>=0;--$i){
 			switch($upperValue[$i]){
@@ -221,7 +209,7 @@ abstract class PropertySanitizer
 				case 'F':
 					break;
 				default:
-					throw new Exception("Value '$escapedValue' is not a valid color.");
+					throw new Exception("Value '$value' is not a valid color.");
 			}
 		}
 		

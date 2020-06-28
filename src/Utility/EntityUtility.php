@@ -143,6 +143,9 @@ abstract class EntityUtility
 	 */
 	public static function createDTO($entity)
 	{
+		if($entity===null){
+			throw new Exception('Provided entity must not be null.');
+		}
 		$entityType= get_class($entity);
 		/* @var $dto FieldEntity */
 		$dto=$entityType::createEmpty();
@@ -227,6 +230,9 @@ abstract class EntityUtility
 		$entityClass= get_class($entity);
 		$fieldBaseConstName="$entityClass::$field";
 		$fieldType=constant($fieldBaseConstName."FieldType");
+		if($fieldType===null){
+			throw new Exception("Could not find field or the 'FieldType' constant for it is missing: '$fieldBaseConstName'.");
+		}
 		switch($fieldType){
 			case FieldTypeEnum::PROPERTY:
 			case FieldTypeEnum::MANY_TO_ONE:
@@ -273,7 +279,7 @@ abstract class EntityUtility
 				}
 				break;
 			default:
-				throw new Exception("Only ONE_TO_MANY and MANY_TO_MANY field types are allowed.");
+				throw new Exception("Unsupported field type: '$fieldType'.");
 		}
 		
 		$entity->$field=$loadedField;
