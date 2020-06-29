@@ -40,10 +40,13 @@ abstract class DatabaseTable implements IDatabaseTable
 	 */
 	public static function loadRowCount()
 	{
-		$query = 'select count(*) from '.self::getTableName().';';
+		$childClassName=get_called_class();
+		
+		$query = 'select count(*) from '.$childClassName::getTableName().';';
 		$result = MySQL::selectSingle($query);
-		var_dump($result);
-		die();
+		$rowCountS = $result[0]['count(*)'];
+		$rowCount = intval($rowCountS);
+		return $rowCount;
 	}
 	
 	/**
