@@ -924,6 +924,9 @@ class Expression
 			
 			$expressions=$newExpressions;
 		}
+		if(count($flattenedExpressions)) {
+			throw new Exception('There must be at least one expression in the Any expression, preferably at least two.');
+		}
 		
 		$entityClass=$flattenedExpressions[0]->EntityClass;
 		$mergedJoins=[];
