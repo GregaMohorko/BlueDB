@@ -36,7 +36,7 @@ abstract class StrongEntity extends FieldEntity
 	 * @var int
 	 */
 	public $ID;
-	const IDField="ID";
+	const IDField='ID';
 	const IDFieldType=FieldTypeEnum::PROPERTY;
 	const IDColumn=self::IDField;
 	const IDPropertyType=PropertyTypeEnum::INT;
