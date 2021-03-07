@@ -336,7 +336,7 @@ class Expression
 	}
 	
 	/**
-	 * Only allowed for text and email properties.
+	 * Only allowed for text, email, date, time and dateTime properties.
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field A text property field (of the restriction object), on which the restriction shall take place.
@@ -369,9 +369,12 @@ class Expression
 		switch($propertyType){
 			case PropertyTypeEnum::TEXT:
 			case PropertyTypeEnum::EMAIL:
+			case PropertyTypeEnum::DATE:
+			case PropertyTypeEnum::TIME:
+			case PropertyTypeEnum::DATETIME:
 				break;
 			default:
-				throw new Exception("Only text and email properties are allowed in contains expression. The provided field was of type '$propertyType'.");
+				throw new Exception("Only text, email, date, time and dateTime properties are allowed in contains expression. The provided field was of type '$propertyType'.");
 		}
 		
 		$column=constant($joiningFieldBaseConstName."Column");
