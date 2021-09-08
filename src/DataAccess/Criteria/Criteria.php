@@ -58,6 +58,10 @@ class Criteria
 	 * @var array The [int, int] array representing the LIMIT clause, where the first item is the offset and the second is the count.
 	 */
 	public $Limit;
+	/**
+	 * @var bool Set this to true to add the DISTINCT modifier to the SELECT statement.
+	 */
+	public $Distinct;
 	
 	/**
 	 * @param string $baseEntityClass
