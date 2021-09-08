@@ -927,7 +927,7 @@ class Expression
 			
 			$expressions=$newExpressions;
 		}
-		if(count($flattenedExpressions)) {
+		if(count($flattenedExpressions) === 0) {
 			throw new Exception('There must be at least one expression in the Any expression, preferably at least two.');
 		}
 		
