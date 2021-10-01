@@ -113,8 +113,10 @@ abstract class DatabaseTable implements IDatabaseTable
 		}
 		
 		$query="SELECT ";
+		if($criteria !== null){
 		if($criteria->Distinct){
 			$query.='DISTINCT ';
+		}
 		}
 		if($isSubEntity){
 			$query.="$toLoadTableName.".$classToLoad::getIDColumn()." AS '$parentFieldName'";
