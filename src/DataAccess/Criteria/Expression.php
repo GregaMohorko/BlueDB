@@ -492,7 +492,7 @@ class Expression
 	}
 	
 	/**
-	 * If the provided field is a ManyToOne, it will be compared to all notnull properties.
+	 * If the provided field is a ManyToOne, it will be compared to all notnull properties. If any of those properties is also a ManyToOne field, it will only compare the ID.
 	 * 
 	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
 	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
