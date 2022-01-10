@@ -36,15 +36,39 @@ abstract class DatabaseTable implements IDatabaseTable
 	/**
 	 * Returns the number of rows in this database table.
 	 * 
+	 * @param Criteria $criteria [optional] Additional criteria.
 	 * @return int The number of rows in this database table.
 	 */
-	public static function loadRowCount()
+	public static function loadRowCount($criteria = null)
 	{
 		$childClassName=get_called_class();
 		
-		$query = 'select count(*) from '.$childClassName::getTableName().';';
-		$result = MySQL::selectSingle($query);
-		$rowCountS = $result[0]['count(*)'];
+		// prepare query
+		$query = 'SELECT count(*) FROM '.$childClassName::getTableName();
+		// criteria
+		if($criteria !== null){
+			if($criteria->BaseEntityClass !== $childClassName){
+				throw new Exception('Criteria with base entity class "'.$criteria->BaseEntityClass.'" was used on "'.$childClassName.'". It should be the same.');
+			}
+			$criteria->prepare();
+			// joins
+			if(!empty($criteria->PreparedQueryJoins)){
+				$query.=' '.$criteria->PreparedQueryJoins;
+			}
+			// conditions
+			if(!empty($criteria->PreparedQueryRestrictions)){
+				$query.=' WHERE '.$criteria->PreparedQueryRestrictions;
+			}
+		}
+		$query.=';';
+		
+		if($criteria === null){
+			$dbResult = MySQL::selectSingle($query);
+			$result = $dbResult[0];
+		}else{
+			$result = self::executeSelectSingleQuery($query, $criteria);
+		}
+		$rowCountS = $result['count(*)'];
 		$rowCount = intval($rowCountS);
 		return $rowCount;
 	}
@@ -113,6 +137,11 @@ abstract class DatabaseTable implements IDatabaseTable
 		}
 		
 		$query="SELECT ";
+		if($criteria !== null){
+			if($criteria->Distinct){
+				$query.='DISTINCT ';
+			}
+		}
 		if($isSubEntity){
 			$query.="$toLoadTableName.".$classToLoad::getIDColumn()." AS '$parentFieldName'";
 		} else{

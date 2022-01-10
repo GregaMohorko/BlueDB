@@ -70,6 +70,6 @@ PHP version >= 5.5
 
 Gregor Mohorko ([www.mohorko.info](https://www.mohorko.info))
 
-Copyright (c) 2020 Gregor Mohorko
+Copyright (c) 2022 Gregor Mohorko
 
 [Apache License 2.0](./LICENSE)

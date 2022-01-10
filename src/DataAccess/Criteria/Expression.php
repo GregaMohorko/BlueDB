@@ -699,6 +699,75 @@ class Expression
 	}
 	
 	/**
+	 * Used for ManyToOne relationships.
+	 * Loads only those rows whose specified ManyToOne relationship has any of the entities in the provided entity collection.
+	 * 
+	 * @param string $criteriaClass Class of the base entity, on which the criteria will be put.
+	 * @param string $field Field (of the restriction object), on which the restriction shall take place.
+	 * @param FieldEntity[] $entities A collection of entities that the specified field will be compared against (ID by ID).
+	 * @param string $parentClass [optional] Actual parent class (if criteria class is a SubEntity) that contains the specified field.
+	 * @return Expression
+	 */
+	public static function isAnyOf($criteriaClass, $field, $entities, $parentClass = null)
+	{
+		if($parentClass===null){
+			$parentClass=$criteriaClass;
+		}
+		
+		if(empty($entities)){
+			return new Expression($parentClass, null, 'FALSE');
+		}
+		
+		$joiningFieldBaseConstName=$parentClass.'::'.$field;
+		
+		/*@var $type FieldTypeEnum*/
+		$type=constant($joiningFieldBaseConstName."FieldType");
+		if($type !== FieldTypeEnum::MANY_TO_ONE){
+			throw new Exception('The provided field is of unsupported field type "'.$type.'".');
+		}
+		
+		$column=constant($joiningFieldBaseConstName.'Column');
+		
+		$termName = null;
+		$theJoin = null;
+		if($criteriaClass === $parentClass){
+			// base class does not need an inner join
+			$termName = $parentClass::getTableName();
+			$theJoin = null;
+		}else{
+			$joinBasePlace = $criteriaClass::getTableName();
+			$joinBaseColumn = $criteriaClass::getIDColumn();
+			$joinColumn = $parentClass::getIDColumn();
+
+			$joinName = Joiner::getJoinName($parentClass, JoinType::INNER,$joinBasePlace,$joinBaseColumn,$joinColumn);
+			$termName = $joinName;
+			$theJoin = Joiner::createJoin($parentClass,JoinType::INNER,$joinBasePlace, $joinBaseColumn, $joinColumn, $joinName);
+		}
+		
+		$term = $termName.'.'.$column.' IN (';
+		$values = [];
+		$valueTypes = [];
+		$isFirst = true;
+		foreach($entities as $fieldEntity){
+			$manyToOneEntityID = $fieldEntity->getID();
+			if($manyToOneEntityID === null){
+				continue;
+			}
+			if(!$isFirst){
+				$term .= ', ';
+			}else{
+				$isFirst = false;
+			}
+			$term .= '?';
+			$values[] = $manyToOneEntityID;
+			$valueTypes[] = PropertyTypeEnum::getPreparedStmtType(PropertyTypeEnum::INT);
+		}
+		$term .= ')';
+		
+		return new Expression($parentClass, $theJoin, $term, $values, $valueTypes);
+	}
+	
+	/**
 	 * Used for ManyToMany relationships.
 	 * Loads only those rows that are NOT in the specified associative relationship. For example: if we have a User_Right associative relationship, and we only want to load those users who have no rights, we would use this expression as isNotIn(User::class, User_Right::class, User_Right::UsersSide).
 	 * 
@@ -927,7 +996,7 @@ class Expression
 			
 			$expressions=$newExpressions;
 		}
-		if(count($flattenedExpressions)) {
+		if(count($flattenedExpressions) === 0) {
 			throw new Exception('There must be at least one expression in the Any expression, preferably at least two.');
 		}
 		
