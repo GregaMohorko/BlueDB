@@ -3,7 +3,7 @@
 /* 
  * BlueDB.php
  * 
- * Copyright 2020 Gregor Mohorko
+ * Copyright 2022 Gregor Mohorko
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
  * 
  * Bootstrap file for BlueDB library.
  * 
- * Version 1.3.0.0
+ * Version 1.4.0.0
  * 
  * @project BlueDB
  * @author Gregor Mohorko <grega@mohorko.info>
